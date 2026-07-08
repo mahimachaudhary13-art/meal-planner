@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Planner</title>
+<style>
+:root{
+  --saffron:#e8730c; --saffron-light:#fdf0e3; --green:#2e7d32; --green-light:#e8f3e9;
+  --ink:#26221d; --muted:#7a7266; --line:#eae4da; --bg:#faf7f2; --card:#ffffff; --card2:#fbf8f3;
+  --red:#c62828; --red-light:#fdeaea; --amber:#b26a00; --amber-light:#fff4e0;
+  --head1:#2e5a1c; --head2:#4a7c2e;
+  --radius:14px; --shadow:0 1px 3px rgba(40,30,10,.07),0 4px 14px rgba(40,30,10,.05);
+}
+/* ---- themes ---- */
+body.t-journal{
+  --bg:#f6efe0; --card:#fffdf4; --card2:#f7f0df; --line:#e3d5b8; --ink:#3d3426; --muted:#8d7e64;
+  --saffron:#b3541e; --saffron-light:#f6e3d0; --green:#5c7c46; --green-light:#ecefdb;
+  --head1:#7a5c3a; --head2:#a3855c; --radius:6px; --shadow:2px 3px 0 rgba(90,70,40,.14);
+  font-family:Georgia,'Times New Roman',serif;
+  background-image:radial-gradient(#dccbaa 1px,transparent 1px);background-size:22px 22px;
+}
+body.t-pastel{
+  --bg:#fdf3f7; --card:#ffffff; --card2:#fbeef4; --line:#f2d9e6; --ink:#43303b; --muted:#a08292;
+  --saffron:#c2559b; --saffron-light:#f9e4f1; --green:#7d6bb5; --green-light:#eeeafb;
+  --head1:#b34a8e; --head2:#d883bb; --shadow:0 2px 10px rgba(180,90,150,.10);
+  background-image:radial-gradient(#f5d7e6 1.2px,transparent 1.2px);background-size:24px 24px;
+}
+body.t-night{
+  --bg:#1c2018; --card:#272c21; --card2:#2f3527; --line:#3c4433; --ink:#edefe5; --muted:#a6ad98;
+  --saffron:#f0a24c; --saffron-light:#3c3220; --green:#93c97e; --green-light:#2c3a24;
+  --red:#ef8080; --red-light:#402626; --amber:#e6b566; --amber-light:#3a3122;
+  --head1:#12160e; --head2:#242c1c; --shadow:0 2px 10px rgba(0,0,0,.35);
+}
+body.t-night .toast{color:#1c2018;background:#edefe5}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+header{background:linear-gradient(135deg,var(--head1),var(--head2));color:#fff;padding:20px 28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.theme-pick{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:11.5px}
+.theme-pick select{border:none;border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:inherit;cursor:pointer;background:rgba(255,255,255,.92);color:#26221d}
+header .logo{font-size:30px}
+header h1{font-size:20px;font-weight:700;letter-spacing:-.2px}
+header p{font-size:12.5px;opacity:.85}
+nav{display:flex;gap:4px;background:var(--card);padding:10px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;overflow-x:auto}
+nav button{border:none;background:none;padding:9px 16px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;font-family:inherit}
+nav button.active{background:var(--saffron-light);color:var(--saffron)}
+nav button:hover:not(.active){background:var(--card2)}
+main{max-width:1180px;margin:0 auto;padding:22px 20px 80px}
+.tab{display:none}.tab.active{display:block}
+h2{font-size:17px;font-weight:700;margin-bottom:4px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+.btn{border:none;border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:filter .15s}
+.btn:hover{filter:brightness(.95)}
+.btn-primary{background:var(--saffron);color:#fff}
+.btn-ghost{background:var(--card);border:1.5px solid var(--line);color:var(--ink)}
+.btn-sm{padding:6px 12px;font-size:12.5px;border-radius:8px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+/* ---- planner ---- */
+.week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.day-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.day-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--card2)}
+.day-head h3{font-size:14px;font-weight:700}
+.score-chip{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px}
+.score-good{background:var(--green-light);color:var(--green)}
+.score-ok{background:var(--amber-light);color:var(--amber)}
+.score-bad{background:var(--red-light);color:var(--red)}
+.slot{padding:10px 14px;border-bottom:1px dashed var(--line)}
+.slot:last-of-type{border-bottom:none}
+.slot-label{font-size:10.5px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:3px;display:flex;justify-content:space-between}
+.slot-dish{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.slot-dish .name{font-weight:600;font-size:13.5px;cursor:pointer}
+.slot-dish .name:hover{color:var(--saffron)}
+.slot-empty{color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0}
+.slot-empty:hover{color:var(--saffron)}
+.macro-mini{font-size:11px;color:var(--muted);margin-top:2px}
+.x-btn{border:none;background:none;color:#c9c1b4;cursor:pointer;font-size:15px;padding:2px 5px;border-radius:6px}
+.x-btn:hover{color:var(--red);background:var(--red-light)}
+.day-totals{padding:10px 14px;background:var(--card2);font-size:11.5px;color:var(--muted)}
+.macro-bar{display:flex;height:7px;border-radius:4px;overflow:hidden;margin:6px 0 4px;background:var(--card2)}
+.macro-bar div{height:100%}
+.mb-p{background:#5b8def}.mb-c{background:#f0b429}.mb-f{background:#e8730c}
+.day-tip{font-size:11.5px;color:var(--amber);margin-top:5px;line-height:1.45}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--muted);margin:2px 0 16px;flex-wrap:wrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+/* ---- picker modal ---- */
+.overlay{position:fixed;inset:0;background:rgba(30,25,15,.45);display:none;align-items:flex-start;justify-content:center;z-index:100;padding:4vh 14px;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:var(--card);border-radius:16px;max-width:640px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-head{padding:16px 20px 12px;border-bottom:1px solid var(--line)}
+.modal-head h3{font-size:15.5px;margin-bottom:2px}
+.modal-head .sub{margin-bottom:10px}
+.modal-body{overflow-y:auto;padding:10px 20px 20px;flex:1}
+.modal input[type=text]{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;margin-bottom:10px}
+.pick-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;background:var(--card)}
+.pick-item:hover{border-color:var(--saffron);background:var(--saffron-light)}
+.pick-item.disabled{opacity:.5;cursor:not-allowed;background:var(--card2)}
+.pick-item .pi-name{font-weight:600;font-size:13.5px}
+.pick-item .pi-meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:1px}
+.bg-conflict{background:var(--red-light);color:var(--red)}
+.bg-used{background:var(--amber-light);color:var(--amber)}
+.bg-custom{background:#ede7f6;color:#5e35b1}
+.bg-south{background:#e0f2f1;color:#00695c}
+.bg-hi-p{background:#e3f2fd;color:#1565c0}
+.bg-roti{background:#fff3e0;color:#b26a00}
+.bg-b12{background:#e3f2fd;color:#1565c0}
+.bg-d3{background:#fff8e1;color:#b28704}
+.tip-item{font-size:12.5px;background:var(--green-light);border-radius:8px;padding:8px 10px;margin-bottom:6px;line-height:1.45}
+.rec-box{font-size:13px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px;line-height:1.55;margin-bottom:10px;white-space:pre-wrap}
+.sec-h{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.modal textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;min-height:70px;margin-bottom:8px;resize:vertical}
+.book-btn{border:none;background:none;color:#b0a794;cursor:pointer;font-size:14px;padding:2px 5px;border-radius:6px}
+.book-btn:hover{color:var(--saffron);background:var(--saffron-light)}
+.yt-link{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#c4302b;text-decoration:none;background:#fdeaea;padding:6px 12px;border-radius:8px;margin-bottom:10px}
+.close-x{position:absolute;top:14px;right:16px;border:none;background:var(--card2);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;color:var(--muted)}
+.modal{position:relative}
+/* ---- library ---- */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--line);background:var(--card);font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted);font-family:inherit}
+.chip.on{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:12px}
+.dish-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.dish-card h4{font-size:13.5px;margin-bottom:4px}
+.dish-card .meta{font-size:11px;color:var(--muted);margin-bottom:8px}
+.macros-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.m-pill{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:8px;background:var(--card2);color:var(--muted)}
+.prep-note{font-size:11px;color:var(--green);background:var(--green-light);padding:6px 9px;border-radius:8px;line-height:1.4}
+/* ---- add dish ---- */
+.form-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;max-width:680px;box-shadow:var(--shadow)}
+.frow{margin-bottom:16px}
+.frow label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px}
+.frow input[type=text],.frow input[type=number],.frow textarea,.frow select{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit}
+.frow textarea{resize:vertical;min-height:60px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid5{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px}
+.hint{font-size:11.5px;color:var(--muted);margin-top:4px}
+.checks{display:flex;gap:10px;flex-wrap:wrap}
+.checks label{display:flex;align-items:center;gap:6px;font-weight:500;font-size:13px;border:1.5px solid var(--line);padding:7px 12px;border-radius:10px;cursor:pointer}
+.checks input:checked+span{color:var(--green);font-weight:700}
+.analysis{border-radius:12px;padding:16px;margin-top:16px;display:none}
+.analysis.show{display:block}
+.analysis h4{font-size:13.5px;margin-bottom:8px}
+.analysis ul{margin:8px 0 0 18px}
+.analysis li{margin-bottom:6px;font-size:13px}
+.an-good{background:var(--green-light)}.an-warn{background:var(--amber-light)}
+/* ---- meal prep ---- */
+.prep-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.prep-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.prep-card h3{font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.prep-card ul{list-style:none}
+.prep-card li{padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px;display:flex;gap:9px;align-items:flex-start}
+.prep-card li:last-child{border-bottom:none}
+.prep-card input[type=checkbox]{margin-top:3px;accent-color:var(--green)}
+.empty-note{color:var(--muted);font-size:13px;padding:20px;text-align:center;background:var(--card);border:1px dashed var(--line);border-radius:var(--radius)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:12px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:200}
+.toast.show{opacity:1}
+/* ---- month calendar ---- */
+.month-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.month-bar h3{font-size:16px;min-width:170px;text-align:center}
+.week-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.week-nav{position:relative}
+.week-nav .wk-label{font-weight:700;font-size:13.5px;min-width:150px;text-align:center;cursor:pointer;border-bottom:1.5px dashed var(--saffron);padding-bottom:1px}
+.week-nav .wk-label:hover{color:var(--saffron)}
+.week-nav .wk-label::after{content:" 📅";font-size:12px}
+.month-head-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.month-head-row div{font-size:11px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.4px}
+.month-cells{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.mcell{background:var(--card);border:1px solid var(--line);border-radius:10px;min-height:86px;padding:6px 7px;cursor:pointer;box-shadow:var(--shadow);transition:transform .1s}
+.mcell:hover{transform:translateY(-2px)}
+.mcell.empty{background:transparent;border:none;box-shadow:none;cursor:default}
+.mcell.empty:hover{transform:none}
+.mcell.today{border:2px solid var(--saffron);background:var(--saffron-light)}
+.mcell.cur-week{outline:2px dashed var(--green);outline-offset:-2px}
+.mdate{font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:3px}
+.mcell.today .mdate{color:var(--saffron)}
+.mmeal{font-size:10.5px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.week-label{font-size:12px;color:var(--muted)}
+/* ---- custom background & style ---- */
+#bgLayer{position:fixed;inset:0;z-index:-2;background-position:center;pointer-events:none}
+#bgVeilEl{position:fixed;inset:0;z-index:-1;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .2s}
+.btn-style{border:none;border-radius:8px;padding:7px 10px;font-size:14px;cursor:pointer;background:rgba(255,255,255,.92)}
+.style-row{margin-bottom:14px}
+.style-row label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px}
+.style-row input[type=range]{width:100%;accent-color:var(--saffron)}
+.style-row input[type=color]{width:52px;height:34px;border:1px solid var(--line);border-radius:8px;padding:2px;cursor:pointer;background:var(--card)}
+.style-row select,.style-row input[type=file]{font-family:inherit;font-size:12.5px;padding:7px 9px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);max-width:100%}
+/* ---- colour pairs ---- */
+.pair-swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.pair-swatches button{width:46px;height:32px;border-radius:9px;border:1.5px solid var(--line);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;transition:transform .1s}
+.pair-swatches button:hover{transform:scale(1.1);border-color:var(--saffron)}
+/* ---- stickers (free placement) ---- */
+.day-card{position:relative}
+.stick-row{display:flex;align-items:center;margin:-4px 0 8px;min-height:20px}
+.stick-add{border:1.5px dashed var(--line);background:none;border-radius:50%;width:19px;height:19px;font-size:12px;color:var(--muted);cursor:pointer;line-height:1;padding:0}
+.stick-add:hover{border-color:var(--saffron);color:var(--saffron)}
+.fstick{position:absolute;z-index:5;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;line-height:1}
+.fstick:active{cursor:grabbing}
+.fstick img{display:block;pointer-events:none}
+.fstick.sel{outline:1.5px dashed var(--saffron);outline-offset:2px;border-radius:6px}
+.fs-body{display:inline-block;pointer-events:none}
+.fs-h,.fs-del{display:none;position:absolute;width:20px;height:20px;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--line);border-radius:50%;box-shadow:var(--shadow);font-size:11px;line-height:1;z-index:7;user-select:none;-webkit-user-select:none;touch-action:none}
+.fstick.sel .fs-h,.fstick.sel .fs-del{display:flex}
+.fs-rot{top:-12px;right:-12px;cursor:grab}
+.fs-res{bottom:-12px;right:-12px;cursor:nwse-resize}
+.fs-del{top:-12px;left:-12px;cursor:pointer;border:1px solid var(--line);color:#c0392b;padding:0}
+.sticker-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.sticker-grid button{font-size:22px;padding:8px 0;border:1px solid var(--line);border-radius:10px;background:var(--card2);cursor:pointer;transition:transform .1s}
+.sticker-grid button:hover{transform:scale(1.15);border-color:var(--saffron)}
+.cstick{position:relative;padding:5px !important}
+.cstick img{width:100%;display:block}
+.cs-del{position:absolute;top:-7px;right:-7px;background:var(--red);color:#fff;border-radius:50%;width:17px;height:17px;font-size:10px;line-height:17px;text-align:center;cursor:pointer}
+.mstick{font-size:11px;float:right}
+/* ---- dish photo ---- */
+.dish-photo{width:100%;max-width:340px;border-radius:12px;margin:4px 0 8px;box-shadow:var(--shadow);display:block}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}main{padding:14px 12px 60px}.mcell{min-height:60px;padding:4px 5px}.mmeal{display:none}.mcell .mdots{font-size:10px}}
+</style>
+</head>
+<body>
+<div id="bgLayer"></div><div id="bgVeilEl"></div>
+<header>
+  <div class="logo">&#127859;</div>
+  <div>
+    <h1>Meal Planner</h1>
+    <p>Vegetarian &middot; No egg / meat / fish &middot; Built for busy weeks in London</p>
+  </div>
+  <div class="theme-pick">
+    <span>&#127912;</span>
+    <select id="themeSel" onchange="setTheme(this.value)">
+      <option value="">🌿 Fresh</option>
+      <option value="t-journal">📖 Journal</option>
+      <option value="t-pastel">🌸 Pastel</option>
+      <option value="t-night">🌙 Night</option>
+    </select>
+    <button class="btn-style" onclick="openStyle()" title="Background & style settings">⚙️</button>
+    <button class="btn-style" onclick="openSync()" title="Save, backup & sync across devices">💾</button>
+  </div>
+</header>
+
+<nav>
+  <button class="active" data-tab="planner">&#128197; Week Planner</button>
+  <button data-tab="month">&#128198; Month</button>
+  <button data-tab="library">&#128218; Dish Library</button>
+  <button data-tab="add">&#10133; Add My Dish</button>
+  <button data-tab="prep">&#129379; Weekend Meal Prep</button>
+  <button data-tab="grocery">&#128722; Grocery List</button>
+</nav>
+
+<main>
+<!-- ============ PLANNER ============ -->
+<section id="planner" class="tab active">
+  <h2 id="plannerTitle">Week Plan</h2>
+  <div class="week-nav" style="margin-bottom:10px">
+    <button class="btn btn-ghost" onclick="shiftWeek(-1)">&#8249; Prev</button>
+    <span class="wk-label" id="weekLabel" onclick="openWeekPicker()" title="Click to jump to any week"></span>
+    <input type="date" id="weekDate" style="position:absolute;opacity:0;width:1px;height:1px;border:0;padding:0" onchange="if(this.value)gotoWeek(new Date(this.value+'T12:00:00'))">
+    <button class="btn btn-ghost" onclick="shiftWeek(1)">Next &#8250;</button>
+    <button class="btn btn-ghost" onclick="gotoWeek(mondayOf(new Date()))">Today</button>
+  </div>
+  <p class="sub">Protein-first planning: lunches and dinners are ranked by protein, fibre and vitamins, with carb- and fat-heavy dishes deprioritised. Each day tracks progress to the <b>90g protein goal</b> — when food alone can't reach it, the day card tells you exactly how to close the gap (protein sides or a supplement scoop). Same-day ingredient repeats auto-hide; fresh rotis are steered to weekends. Click &#128214; on any dish for its recipe and eat-right tips.</p>
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="autoFillWeek()">&#10024; Auto-fill week</button>
+    <button class="btn btn-ghost" onclick="clearWeek()">Clear week</button>
+    <span style="font-size:12px;color:var(--muted)" id="weekSummary"></span>
+  </div>
+  <div class="legend">
+    <span><span class="dot" style="background:#5b8def"></span>Protein</span>
+    <span><span class="dot" style="background:#f0b429"></span>Carbs</span>
+    <span><span class="dot" style="background:#e8730c"></span>Fat</span>
+    <span>Daily target (per person): ~1,900–2,200 kcal &middot; 70g+ protein &middot; 28g+ fibre</span>
+  </div>
+  <div class="week-grid" id="weekGrid"></div>
+</section>
+
+<!-- ============ MONTH ============ -->
+<section id="month" class="tab">
+  <h2>Month at a Glance</h2>
+  <p class="sub">See your whole month, plan two weeks ahead, or jump to any future week. Click a day to open that week in the planner. &#128467;&#65039; Dashed green = week currently open in the planner.</p>
+  <div class="month-bar">
+    <button class="btn btn-ghost" onclick="shiftMonth(-1)">&#8249; Prev</button>
+    <h3 id="monthLabel"></h3>
+    <button class="btn btn-ghost" onclick="shiftMonth(1)">Next &#8250;</button>
+    <button class="btn btn-ghost" onclick="monthCursor=new Date();renderMonth()">This month</button>
+  </div>
+  <div class="month-head-row"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+  <div class="month-cells" id="monthCells"></div>
+</section>
+
+<!-- ============ LIBRARY ============ -->
+<section id="library" class="tab">
+  <h2>Dish Library</h2>
+  <p class="sub">All macros are approximate, per serving (1 person). Your custom dishes appear here too.</p>
+  <input type="text" id="libSearch" placeholder="Search dishes… (e.g. paneer, dal, dosa)" style="width:100%;max-width:420px;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;margin-bottom:12px" oninput="renderLibrary()">
+  <div class="chips" id="libChips"></div>
+  <div class="lib-grid" id="libGrid"></div>
+</section>
+
+<!-- ============ ADD DISH ============ -->
+<section id="add" class="tab">
+  <h2>Add Your Own Dish</h2>
+  <p class="sub">Enter your dish and its rough nutrition — I'll analyse the balance, suggest how to fix it, and add it to your library and planner.</p>
+  <div class="form-card">
+    <div class="frow"><label>Dish name</label><input type="text" id="cdName" placeholder="e.g. Mummy's Kathal Sabzi + 2 Roti"></div>
+    <div class="frow"><label>Which meals is this for?</label>
+      <div class="checks">
+        <label><input type="checkbox" id="cdB"><span>Breakfast</span></label>
+        <label><input type="checkbox" id="cdL" checked><span>Lunch</span></label>
+        <label><input type="checkbox" id="cdD" checked><span>Dinner</span></label>
+      </div>
+    </div>
+    <div class="frow"><label>Hero ingredients <span style="font-weight:400;color:var(--muted)">(used to avoid repeats in the same day)</span></label>
+      <div class="checks" id="cdTags"></div>
+      <input type="text" id="cdTagOther" placeholder="Other ingredients, comma separated (e.g. kathal, arbi)" style="margin-top:8px">
+    </div>
+    <div class="frow"><label>Nutrition per serving (approximate is fine)</label>
+      <div class="grid5">
+        <div><input type="number" id="cdP" placeholder="0" min="0"><div class="hint">Protein g</div></div>
+        <div><input type="number" id="cdC" placeholder="0" min="0"><div class="hint">Carbs g</div></div>
+        <div><input type="number" id="cdF" placeholder="0" min="0"><div class="hint">Fat g</div></div>
+        <div><input type="number" id="cdFib" placeholder="0" min="0"><div class="hint">Fibre g</div></div>
+        <div><input type="number" id="cdCal" placeholder="auto" min="0"><div class="hint">kcal (optional)</div></div>
+      </div>
+      <div class="hint">Leave kcal blank and I'll compute it (4/4/9 rule). Not sure of macros? Rough guide: 1 katori dal ≈ 7g protein, 1 roti ≈ 3g protein / 18g carbs, 100g paneer ≈ 18g protein / 20g fat.</div>
+    </div>
+    <div class="grid2">
+      <div class="frow"><label>Cooking time (min)</label><input type="number" id="cdPrep" placeholder="30" min="0"></div>
+      <div class="frow"><label>Cuisine</label><select id="cdCui"><option value="N">North Indian</option><option value="S">South Indian</option><option value="O">Other / Fusion</option></select></div>
+    </div>
+    <div class="frow"><label>Weekend prep-ahead note (optional)</label><textarea id="cdPrepNote" placeholder="e.g. Gravy can be made Sunday and frozen"></textarea></div>
+    <div class="frow"><label>Recipe (optional)</label><textarea id="cdRecipe" placeholder="Steps, or paste from anywhere"></textarea></div>
+    <div class="frow"><label>YouTube link (optional)</label><input type="text" id="cdYt" placeholder="https://youtube.com/…"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" onclick="analyzeCustom(false)">Analyse balance</button>
+      <button class="btn btn-primary" onclick="analyzeCustom(true)">Analyse &amp; add to library</button>
+    </div>
+    <div class="analysis" id="cdAnalysis"></div>
+  </div>
+</section>
+
+<!-- ============ MEAL PREP ============ -->
+<section id="prep" class="tab">
+  <h2>Weekend Meal Prep Plan</h2>
+  <p class="sub">Generated from your week's plan. Do this on Sunday (60–90 min) and weeknight cooking drops to 15–25 minutes.</p>
+  <div id="prepContent"></div>
+</section>
+
+<!-- ============ GROCERY ============ -->
+<section id="grocery" class="tab">
+  <h2>Grocery List</h2>
+  <p class="sub">Auto-built from your week's plan, grouped by aisle. Quantities assume 2 people. Tick things off as you shop. Shopping for just a day or two? Filter below.</p>
+  <div id="grocChips" class="chips" style="margin-bottom:12px"></div>
+  <div id="groceryContent"></div>
+</section>
+</main>
+
+<div class="overlay" id="pickerOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closePicker()">&#10005;</button>
+    <div class="modal-head">
+      <h3 id="pickerTitle">Pick a dish</h3>
+      <p class="sub" id="pickerSub"></p>
+      <input type="text" id="pickerSearch" placeholder="Search…" oninput="renderPicker()">
+      <label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="showExcluded" onchange="renderPicker()"> Show conflicting dishes too</label>
+    </div>
+    <div class="modal-body" id="pickerList"></div>
+  </div>
+</div>
+<div class="overlay" id="dishOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeDish()">&#10005;</button>
+    <div class="modal-head"><h3 id="dishTitle"></h3><p class="sub" id="dishMeta" style="margin-bottom:4px"></p></div>
+    <div class="modal-body" id="dishBody"></div>
+  </div>
+</div>
+<div class="overlay" id="styleOverlay">
+  <div class="modal" style="max-width:440px">
+    <button class="close-x" onclick="closeStyle()">&#10005;</button>
+    <div class="modal-head"><h3>🎨 Background &amp; style</h3><p class="sub">Personalise your journal — colour, photo background, transparency.</p></div>
+    <div class="modal-body">
+      <div class="style-row"><label>Background colour</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="color" id="stColor" oninput="bgSet.color=this.value;applyBg()">
+          <button class="btn btn-ghost btn-sm" onclick="bgSet.color='';applyBg();syncStyleUI()">Use theme colour</button>
+        </div>
+      </div>
+      <div class="style-row"><label>Font colour — pair it with your background for readability</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="color" id="stInk" oninput="bgSet.ink=this.value;applyBg()">
+          <button class="btn btn-ghost btn-sm" onclick="bgSet.ink='';applyBg();syncStyleUI()">Use theme colour</button>
+        </div>
+        <label style="margin-top:10px;font-weight:400;color:var(--muted)">…or pick a ready-made readable pair (background + font)</label>
+        <div class="pair-swatches" id="pairSwatches"></div>
+      </div>
+      <div class="style-row"><label>Background image (any photo)</label>
+        <input type="file" id="stFile" accept="image/*" onchange="uploadBg(this)">
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <select id="stFit" onchange="bgSet.fit=this.value;applyBg()">
+            <option value="cover">Fill screen (cover)</option>
+            <option value="contain">Fit whole image</option>
+            <option value="repeat">Tile / repeat</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="bgSet.img='';applyBg();syncStyleUI()">Remove image</button>
+        </div>
+      </div>
+      <div class="style-row"><label>Image softness (blur): <span id="stBlurVal"></span>px</label>
+        <input type="range" id="stBlur" min="0" max="14" step="1" oninput="bgSet.blur=+this.value;applyBg();syncStyleUI()"></div>
+      <div class="style-row"><label>Fade image into background (readability): <span id="stVeilVal"></span>%</label>
+        <input type="range" id="stVeil" min="0" max="95" step="5" oninput="bgSet.veil=+this.value;applyBg();syncStyleUI()"></div>
+      <div class="style-row"><label>Card opacity — lower = see-through cards: <span id="stCardVal"></span>%</label>
+        <input type="range" id="stCard" min="35" max="100" step="5" oninput="bgSet.cardAlpha=+this.value;applyBg();syncStyleUI()"></div>
+      <button class="btn btn-ghost" onclick="resetBg()">↺ Reset everything to theme default</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="syncOverlay">
+  <div class="modal" style="max-width:470px">
+    <button class="close-x" onclick="closeSync()">&#10005;</button>
+    <div class="modal-head"><h3>💾 Save, backup &amp; sync</h3><p class="sub">Everything already auto-saves on this device with every change. Use these to carry your data to other devices.</p></div>
+    <div class="modal-body">
+      <div class="sec-h">Backup file — works offline, no account needed</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0">
+        <button class="btn btn-primary btn-sm" onclick="exportData()">⬇ Export backup</button>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">⬆ Import backup<input type="file" accept=".json,application/json" style="display:none" onchange="importData(this)"></label>
+      </div>
+      <p class="sub" style="font-size:11.5px">Export on one device, import on another — plans, recipes, photos, stickers and themes all come across.</p>
+      <div class="sec-h" style="margin-top:16px">Cloud auto-sync — free, via GitHub</div>
+      <p class="sub" style="font-size:11.5px;margin-bottom:8px">Auto-saves to your own <b>private</b> GitHub Gist a few seconds after every change, and pulls the latest whenever you open the app. One-time setup:<br>
+      1. Create a free account at github.com<br>
+      2. Settings → Developer settings → Personal access tokens (classic) → Generate new token → tick only the <b>gist</b> box → set expiry to "No expiration"<br>
+      3. Paste the token below (do this once on each device)</p>
+      <input type="password" id="syncToken" placeholder="ghp_… paste your token here">
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="connectSync()">Connect</button>
+        <button class="btn btn-ghost btn-sm" onclick="manualSync()">Sync now</button>
+        <button class="btn btn-ghost btn-sm" onclick="disconnectSync()">Disconnect</button>
+      </div>
+      <p class="sub" id="syncStatus" style="margin-top:8px;font-size:12px;font-weight:600"></p>
+      <p class="sub" style="font-size:11px;margin-top:6px">The token lives only in this browser and can only touch gists — nothing else on your GitHub. If both devices edit at the same time, the most recent save wins.</p>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="stickerOverlay">
+  <div class="modal" style="max-width:340px">
+    <button class="close-x" onclick="closeStickers()">&#10005;</button>
+    <div class="modal-head"><h3>Add a sticker</h3><p class="sub" id="stickerSub"></p></div>
+    <div class="modal-body">
+      <div class="sticker-grid" id="stickerGrid"></div>
+      <div class="sec-h" style="margin-top:16px">My stickers (WhatsApp-style)</div>
+      <p class="sub" style="font-size:11.5px;margin-bottom:8px">WhatsApp's sticker packs can't be bundled into an offline app, but save/export any sticker as an image (.webp/.png) and upload it here — it stays in your palette to reuse on any day.</p>
+      <div class="sticker-grid" id="customStickers" style="grid-template-columns:repeat(5,1fr)"></div>
+      <input type="file" accept="image/*" onchange="uploadSticker(this)" style="margin-top:10px;font-size:12px">
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   DISH LIBRARY — macros are per serving (1 person), approximate.
+   [name, meals, cuisine, kcal, protein, carbs, fat, fibre, tags[], prepMin, prepAhead]
+   meals: string containing B/L/D. cuisine: N=North, S=South, O=Other.
+   tags = "hero ingredients" used for same-day conflict + variety logic.
+===================================================================== */
+const D = [
+// ---------- BREAKFAST ----------
+["Vegetable Poha with peanuts","B","N",320,8,55,9,5,["poha","peanut"],15,""],
+["Masala Oats with veggies","B","N",300,11,45,8,7,["oats"],10,""],
+["Besan Chilla + dahi","B","N",350,16,35,15,6,["besan","dahi"],15,"Batter keeps 2 days in fridge"],
+["Moong Dal Chilla + chutney","B","N",340,18,40,10,8,["moong"],20,"Soak & grind moong batter on Sunday — keeps 3 days"],
+["Paneer Paratha + dahi","B","N",450,18,48,20,6,["paneer","wheat","dahi"],25,"Knead atta ahead; stuffing keeps 2 days"],
+["Aloo Paratha + dahi","B","N",430,11,58,17,5,["potato","wheat","dahi"],25,"Boil potatoes in bulk on Sunday"],
+["Vegetable Rava Upma","B","S",310,8,50,9,5,["semolina"],15,""],
+["Idli + Sambar","B","S",330,12,58,5,7,["idli","sambar"],20,"Batter lasts 4–5 days refrigerated (or buy fresh batter)"],
+["Masala Dosa + chutney","B","S",400,9,60,13,5,["dosa","potato"],25,"Dosa batter + potato masala both prep-ahead"],
+["Rava Idli + chutney","B","S",320,9,50,9,4,["semolina"],20,""],
+["Vermicelli (Seviyan) Upma","B","S",300,8,48,8,4,["vermicelli"],15,""],
+["Moong Sprouts Chaat Bowl","B","N",250,14,35,6,10,["sprouts"],10,"Sprout moong over the weekend — 2 day head start"],
+["Vegetable Daliya","B","N",290,10,50,6,8,["daliya"],20,""],
+["Gobi Paratha + dahi","B","N",420,12,52,18,6,["cauliflower","wheat","dahi"],25,"Grate & squeeze gobi ahead"],
+["Methi Thepla + dahi","B","N",380,10,50,15,6,["wheat","methi"],20,"Make a batch Sunday — keeps 3–4 days, great office lunch too"],
+["Greek Yogurt + fruit + granola","B","O",300,15,40,8,5,["dahi","fruit"],5,""],
+["Overnight Oats with nuts & seeds","B","O",350,13,45,12,7,["oats","dahi"],5,"Assemble the night before"],
+["Poori Bhaji (weekend treat)","B","N",520,10,65,24,5,["wheat","potato"],30,""],
+["Onion-Tomato Uttapam","B","S",350,10,55,9,5,["dosa"],20,"Uses dosa batter — same weekend batch"],
+["Sabudana Khichdi","B","N",400,6,60,15,3,["sabudana","potato","peanut"],20,"Soak sabudana overnight"],
+["Paneer Bhurji on toast","B","N",380,20,30,20,4,["paneer","bread"],15,""],
+["Boiled Chana Chaat Bowl","B","N",300,13,45,7,10,["chana"],10,"Boil chana in bulk Sunday — use across 3 meals"],
+["Muesli + milk + banana","B","O",320,11,55,7,6,["milk","fruit"],5,""],
+["Ven Pongal + Sambar","B","S",420,13,62,13,6,["rice","dal","sambar"],30,""],
+["Pesarattu (moong dosa) + chutney","BD","S",380,16,50,11,8,["moong"],25,"Batter prep-ahead like dosa"],
+// ---------- LUNCH / DINNER ----------
+["Dal Tadka + Jeera Rice + salad","LD","N",520,18,80,13,10,["dal","rice"],30,"Cook dal in bulk — freezes beautifully"],
+["Rajma + Rice + salad","LD","N",550,19,85,12,13,["rajma","rice"],40,"Soak Sat night, pressure-cook Sunday; freeze in portions"],
+["Chole + Rice","LD","N",560,18,85,14,12,["chana","rice"],40,"Soak & boil chole in bulk Sunday"],
+["Chole + 2 Roti + salad","LD","N",520,19,70,15,12,["chana","wheat"],40,"Same bulk-boiled chole"],
+["Kadhi Chawal","LD","N",480,14,70,15,5,["besan","dahi","rice"],30,"Kadhi keeps 2 days; pakoras optional"],
+["Paneer Butter Masala + 2 Roti","LD","N",600,22,55,30,7,["paneer","wheat"],35,"Make onion-tomato gravy base in bulk & freeze"],
+["Palak Paneer + 2 Roti","LD","N",520,23,48,25,8,["paneer","palak","wheat"],35,"Blanch & purée palak on Sunday; freezes well"],
+["Matar Paneer + 2 Roti","LD","N",540,22,55,24,8,["paneer","peas","wheat"],30,"Gravy base prep-ahead"],
+["Kadai Paneer + 2 Roti","LD","N",560,23,52,27,7,["paneer","capsicum","wheat"],30,"Gravy base prep-ahead"],
+["Paneer Tikka + green chutney + salad","D","N",420,28,20,25,5,["paneer","capsicum"],30,"Marinate paneer up to 24h ahead"],
+["Paneer Bhurji + 2 Roti","LD","N",520,24,45,26,5,["paneer","wheat"],20,""],
+["Paneer Pulao + Raita","LD","N",550,20,70,18,6,["paneer","rice","dahi"],30,""],
+["Aloo Gobi + Dal + 2 Roti","LD","N",520,17,75,15,10,["potato","cauliflower","dal","wheat"],35,""],
+["Bhindi Masala + Dal + 2 Roti","LD","N",500,16,68,16,10,["bhindi","dal","wheat"],30,"Wash & fully dry bhindi ahead"],
+["Baingan Bharta + 2 Roti + dahi","LD","N",460,14,55,18,9,["baingan","wheat","dahi"],35,"Roast baingan on the weekend"],
+["Veg Pulao + Boondi Raita","LD","N",480,12,75,13,7,["rice","dahi","mixveg"],25,"Chop veg ahead"],
+["Veg Biryani + Raita","LD","N",520,12,80,15,7,["rice","dahi","mixveg"],45,"Weekend batch cook; portion & refrigerate for 2 meals"],
+["Dal Makhani + 2 Roti","LD","N",560,19,65,22,11,["dal","wheat"],45,"Slow-cook Sunday — tastes better the next day; freezes well"],
+["Soya Chunk Curry + Rice","LD","N",520,26,70,12,9,["soya","rice"],30,"Highest-protein weeknight option"],
+["Soya Keema + 2 Roti","LD","N",480,25,55,15,9,["soya","wheat"],25,"Keema freezes well"],
+["Mix Veg + Dal + 2 Roti","LD","N",510,17,70,15,11,["mixveg","dal","wheat"],30,"Chop veg on Sunday"],
+["Lauki Chana Dal + 2 Roti","LD","N",450,16,62,12,10,["lauki","dal","wheat"],30,""],
+["Sambar + Rice + Beans Poriyal","LD","S",500,15,82,10,11,["sambar","rice","beans"],30,"Sambar keeps 3 days refrigerated"],
+["Curd Rice + pickle + papad","LD","S",420,11,65,12,3,["rice","dahi"],15,"Fastest tired-day dinner"],
+["Lemon Rice + peanuts + salad","LD","S",450,9,68,15,5,["rice","peanut"],20,"Great for using leftover rice"],
+["Tamarind (Puliyogare) Rice + salad","LD","S",460,8,72,15,5,["rice","peanut"],20,"Pulikachal paste keeps 2 weeks"],
+["Veg Khichdi + dahi + papad","LD","N",460,15,68,12,9,["rice","dal","dahi"],25,"One-pot; perfect tired-weeknight meal"],
+["Moong Dal Khichdi (light)","D","N",420,14,65,9,8,["rice","dal"],20,"One-pot, 20 min"],
+["Palak Dal + Rice","LD","N",480,17,72,11,10,["dal","palak","rice"],30,"Palak purée prep-ahead"],
+["Khichdi + Kadhi","LD","N",500,16,70,15,7,["rice","dal","besan","dahi"],30,""],
+["Lauki Kofta Curry + 2 Roti","LD","N",520,14,58,25,7,["lauki","besan","wheat"],40,"Koftas can be made & frozen"],
+["Malai Kofta + 2 Roti (weekend treat)","LD","N",650,18,60,35,6,["paneer","potato","wheat"],45,"Koftas freeze well"],
+["Veg Kathi Roll","LD","N",480,15,60,18,6,["wheat","mixveg"],25,"Filling prep-ahead; assemble in 5 min"],
+["Chana Masala Wrap","LD","N",470,17,65,14,10,["chana","wheat"],20,"Uses bulk-boiled chole"],
+["Dosa + Sambar (dinner)","LD","S",450,12,70,12,6,["dosa","sambar"],25,"Batter + sambar both from weekend batch"],
+["Veg Fried Rice + Gobi Manchurian","LD","O",550,12,80,18,6,["rice","mixveg","cauliflower"],35,"Great for leftover rice"],
+["Paneer Fried Rice","LD","O",540,20,72,16,5,["paneer","rice"],25,"Leftover rice + 15 min"],
+["Rasam + Rice + Potato Roast","LD","S",460,10,72,12,7,["rice","potato"],25,"Rasam powder batch keeps months"],
+["Methi Malai Matar + 2 Roti","LD","N",520,15,55,25,8,["methi","peas","wheat"],30,""],
+["Sev Tamatar + 2 Roti","LD","N",460,12,55,20,6,["tomato","wheat"],20,"15-min Gujarati fix"],
+["Dahi Aloo + 2 Roti","LD","N",440,12,60,15,6,["potato","dahi","wheat"],25,""],
+["Matar Mushroom + 2 Roti","LD","N",470,15,55,18,8,["mushroom","peas","wheat"],30,""],
+["Mushroom Masala + Rice","LD","N",480,14,68,15,7,["mushroom","rice"],30,"Gravy base prep-ahead"],
+["Mini Veg Thali (dal + sabzi + roti + dahi)","LD","N",600,20,80,20,12,["dal","mixveg","wheat","dahi"],40,"Assemble from Sunday-cooked dal + sabzi"],
+["Stuffed Capsicum + Dal + Roti","LD","N",500,16,62,18,9,["capsicum","potato","dal","wheat"],40,"Stuff & refrigerate a day ahead"],
+["Grilled Veg Sandwich + Tomato Soup","D","O",420,14,55,15,7,["bread","mixveg","tomato"],20,"Soup freezes well"],
+["Veg Momos + clear soup (weekend)","D","O",450,13,60,15,5,["wheat","mixveg"],45,"Momos freeze beautifully — steam from frozen"],
+["Pav Bhaji","LD","N",550,13,75,22,8,["potato","mixveg","bread"],35,"Bhaji freezes well; reheat + toast pav"],
+["Dahi Vada + Chana Chaat (light dinner)","D","N",420,16,55,14,7,["dal","dahi","chana"],30,"Vadas can be made ahead & frozen"],
+["Aloo Matar + 2 Roti","LD","N",470,13,65,15,8,["potato","peas","wheat"],25,""],
+["Corn Palak + 2 Roti","LD","N",480,14,60,17,8,["corn","palak","wheat"],30,"Palak purée prep-ahead"],
+["Hara Bhara Kebab + Dal + Roti","LD","N",520,17,65,18,10,["palak","peas","potato","dal","wheat"],40,"Kebabs freeze well — batch on Sunday"],
+["Tinda / Turai Sabzi + Dal + Roti","LD","N",440,15,58,13,9,["mixveg","dal","wheat"],30,""],
+["Chapati Noodles (leftover roti stir-fry)","D","O",420,11,58,15,6,["wheat","mixveg"],15,"Best use of leftover rotis"],
+["Rajma Salad Bowl (protein bowl)","LD","O",430,18,55,12,14,["rajma","mixveg"],15,"Uses Sunday-boiled rajma"],
+["Vegetable Handvo","BD","N",400,13,48,16,7,["besan","mixveg","dahi"],40,"Batter ferments overnight; bake a tray for 2 days"],
+["Thepla + Sukhi Bhaji + chaas","LD","N",470,12,62,18,7,["wheat","methi","potato"],25,"Theplas from weekend batch"],
+// ---------- RICE BOWLS & NO-ROTI QUICK MEALS (weekday heroes) ----------
+["Palak Paneer Rice Bowl","LD","N",560,24,70,18,8,["paneer","palak","rice"],30,"Palak purée + gravy base prep-ahead → 15-min assembly"],
+["Kadai Paneer Rice Bowl","LD","N",580,23,72,20,7,["paneer","capsicum","rice"],30,"Gravy base prep-ahead"],
+["Matar Paneer + Jeera Rice","LD","N",570,22,72,19,8,["paneer","peas","rice"],30,"Gravy base prep-ahead"],
+["Soya Keema Rice Bowl","LD","N",520,26,68,13,9,["soya","rice"],25,"Keema freezes well — batch on Sunday"],
+["Chole Quinoa Protein Bowl","LD","O",520,21,70,14,13,["chana","quinoa"],25,"Sunday-boiled chole; quinoa cooks in 15 min"],
+["Rajma Quinoa Bowl","LD","O",510,20,68,12,14,["rajma","quinoa"],25,"Sunday-boiled rajma"],
+["Dal-Sabzi Thali Bowl (rice)","LD","N",540,18,78,14,11,["dal","mixveg","rice"],25,"Assemble from Sunday dal + a quick sabzi"],
+["Veg Tehri (one-pot rice)","LD","N",480,13,75,13,8,["rice","potato","peas","mixveg"],30,"One pot, pressure cooker"],
+["Bisi Bele Bath","LD","S",520,16,80,13,10,["rice","dal","mixveg"],35,"BBB powder keeps months; one-pot"],
+["Tomato Rice + peanuts","LD","S",450,10,68,14,6,["rice","tomato","peanut"],20,"Great with leftover rice"],
+["Paneer Tikka Wrap (store-bought tortilla)","LD","O",480,21,50,20,5,["paneer","wrap"],15,"Marinate paneer ahead; wraps = zero rolling"],
+["Dal Fry + Frozen Roti (store-bought)","LD","N",500,17,68,14,10,["dal","wheat"],20,"Frozen/ready rotis: 2 min each on tawa — no kneading"],
+["Chana Salad Bowl + toasted pita","D","O",450,17,62,13,12,["chana","bread"],15,"Sunday-boiled chole"],
+["Curd Semiya (yogurt vermicelli bowl)","D","S",400,12,58,12,4,["vermicelli","dahi"],15,"Cool, quick light dinner"],
+/* ---- B12 & D3 boosters (high-protein) ---- */
+["Ragi-Banana-Peanut Smoothie (fortified soy milk)","B","O",380,18,55,11,7,["ragi","fortified","fruit","peanut"],10,"Dry-roast a ragi batch on Sunday — keeps weeks in a jar"],
+["Tofu Bhurji + seeded toast","B","N",420,24,38,17,6,["tofu","bread","capsicum","tomato"],20,"Crumble & press tofu ahead; bhurji masala base keeps 3 days"],
+["Fortified Cereal Bowl + nuts, seeds & fruit","B","O",380,15,56,11,7,["fortified","milk","fruit"],5,""],
+["Marmite-Cheese Toast + fruit","B","O",390,16,44,16,5,["bread","marmite","milk","fruit"],10,""],
+["Ragi Dosa + sambar","BLD","S",450,15,68,11,9,["ragi","dosa","sambar"],25,"Ragi dosa batter keeps 3–4 days refrigerated"],
+["Sunned Mushroom Masala + jeera rice","LD","N",510,17,70,15,9,["mushroom","rice"],25,"Sun mushrooms 15–20 min while you prep — free vitamin D"],
+["Soya-Mushroom Keema Bowl","LD","N",530,28,64,14,10,["soya","mushroom","peas","rice"],30,"Keema freezes well — batch on Sunday"],
+["Tofu Tikka Rice Bowl","LD","O",540,26,66,16,7,["tofu","capsicum","rice"],25,"Marinate tofu up to 2 days ahead"],
+["Shiitake-Veg Fried Rice","LD","O",500,16,72,14,7,["mushroom","rice","corn","beans"],20,"Best with day-old fridge rice"],
+["Nooch Dal-Khichdi (cheesy, no cheese)","LD","N",480,21,66,12,11,["dal","rice","nutyeast"],25,"One-pot pressure cooker meal"],
+["Paneer & Sunned-Mushroom Bhuna + frozen roti","LD","N",550,27,54,22,8,["paneer","mushroom","wheat"],30,"Gravy base prep-ahead; sun the mushrooms while it simmers"],
+/* ---- global high-protein additions ---- */
+["Tempeh Stir-fry Bowl + broccoli & rice","LD","O",520,28,58,16,9,["tempeh","broccoli","rice"],25,"Tempeh keeps ~2 weeks sealed; make sauce ahead"],
+["Paneer Burrito Bowl (black beans, corn, salsa)","LD","O",560,27,68,17,12,["paneer","blackbean","corn","rice"],30,"Beans + salsa prep Sunday"],
+["Creamy Red-Lentil Pasta","LD","O",550,26,74,13,9,["pasta","dal","tomato"],25,"Sauce freezes well — double batch"],
+["Halloumi & Chickpea Traybake + couscous","LD","O",560,27,55,22,10,["halloumi","chana","capsicum","couscous"],35,"Chop veg ahead — the oven does the rest"],
+["Greek Chickpea-Feta Salad + pita","LD","O",480,21,52,18,11,["chana","feta","bread","mixveg"],15,"Sunday-boiled chole"],
+["Falafel-Hummus Mezze Plate","LD","O",520,20,60,20,12,["chana","hummus","bread","mixveg"],30,"Falafel mix freezes; bake, don't fry"],
+["Peanut Tofu Noodles (pad-thai style)","LD","O",540,24,62,20,7,["tofu","noodles","pb","mixveg"],25,"Peanut sauce keeps a week in the fridge"],
+["Edamame & Paneer Fried Rice","LD","O",530,25,64,16,7,["edamame","paneer","rice"],20,"Frozen edamame straight into the wok"],
+["Miso Tofu Noodle Soup Bowl","D","O",460,23,56,14,6,["tofu","miso","noodles","mushroom"],20,"Broth base keeps 4 days"],
+["Bean & Cheese Quesadillas + salsa","LD","O",540,24,60,20,11,["blackbean","cheese","wrap","tomato"],20,"Bean filling freezes"],
+["White Bean Pesto Pasta","LD","O",550,22,72,17,11,["whitebean","pasta","cheese"],25,"Double batch — lunchbox gold"],
+["PB-Banana Greek Yogurt Smoothie Bowl","B","O",420,25,48,14,6,["dahi","pb","fruit","oats"],10,""],
+["Paneer Shakshuka (no egg) + sourdough","B","O",450,24,42,20,7,["paneer","tomato","capsicum","bread"],25,"Sauce base keeps 4 days"],
+["Tempeh Rasher Sandwich + salad","LD","O",480,22,52,18,8,["tempeh","bread","tomato","mixveg"],20,"Marinated tempeh rashers keep 4 days"]
+];
+
+const dishFields = ["name","meals","cui","cal","p","c","f","fib","tags","prep","prepAhead"];
+function toDish(arr,i,custom){const o={id:(custom?"c":"d")+i,custom:!!custom};dishFields.forEach((k,j)=>o[k]=arr[j]);return o}
+
+/* ---- storage (guarded: falls back to memory if localStorage unavailable) ---- */
+const mem={};
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):(mem[k]!==undefined?mem[k]:d)}catch(e){return mem[k]!==undefined?mem[k]:d}},
+  set(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+
+let customDishes = store.get("mealplanner_custom",[]);
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const MEALS=[["B","Breakfast"],["L","Lunch"],["D","Dinner"]];
+
+/* ---- journal aesthetics: emojis ---- */
+const MEAL_EMOJI={B:"🌅",L:"☀️",D:"🌙"};
+const EMOJI_TAGS=[ // first match wins — order = specificity
+  ["paneer","🧀"],["tofu","🌱"],["soya","🌱"],["mushroom","🍄"],["dosa","🥞"],["idli","⚪"],
+  ["smoothie","🥤"],["ragi","🥤"],["salad","🥗"],["sprouts","🌿"],["chana","🫘"],["rajma","🫘"],
+  ["dal","🍲"],["moong","🍲"],["sambar","🍲"],["khichdi","🍚"],["rice","🍚"],["pulao","🍚"],["biryani","🍚"],
+  ["poha","🍛"],["upma","🍛"],["oats","🥣"],["dahi","🥛"],["milk","🥛"],["paratha","🫓"],["roti","🫓"],
+  ["wheat","🫓"],["bread","🍞"],["wrap","🌯"],["pasta","🍝"],["soup","🥣"],["fruit","🍎"],["peanut","🥜"],
+  ["besan","🥞"],["chilla","🥞"],["palak","🥬"],["methi","🥬"],["bhindi","🥒"],["baingan","🍆"],
+  ["potato","🥔"],["corn","🌽"],["peas","🟢"],["mixveg","🥦"],["cauliflower","🥦"],["marmite","🍯"],
+  ["nutyeast","✨"],["fortified","💪"],["quinoa","🌾"],["semolina","🌾"]
+];
+function dishEmoji(d){
+  const n=d.name.toLowerCase();
+  for(const [k,e] of EMOJI_TAGS){if(d.tags.includes(k)||n.includes(k))return e}
+  return "🍛";
+}
+
+/* ---- date-based weeks: plans are keyed by the Monday's ISO date ---- */
+function mondayOf(dt){const d=new Date(dt);d.setHours(12,0,0,0);const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);return d}
+function isoDate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function dateOfDay(monday,day){const d=new Date(monday);d.setDate(d.getDate()+DAYS.indexOf(day));return d}
+function fmtShort(d){return d.getDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]}
+
+let plans = store.get("mealplanner_plans",{});           // {"2026-07-06":{Mon:{B:id,...},...},...}
+// migrate old single-week data into the current week
+const _legacy = store.get("mealplanner_week",null);
+if(_legacy && Object.keys(_legacy).length && !plans[isoDate(mondayOf(new Date()))]){
+  plans[isoDate(mondayOf(new Date()))]=_legacy;
+  store.set("mealplanner_plans",plans);
+}
+
+let curMonday = mondayOf(new Date());
+let week = plans[isoDate(curMonday)] || {};              // the week currently shown
+function saveWeek(){plans[isoDate(curMonday)]=week;store.set("mealplanner_plans",plans)}
+function gotoWeek(monday){saveWeek();curMonday=mondayOf(monday);week=plans[isoDate(curMonday)]||{};renderWeek();renderPrep();if(typeof renderGrocery==="function")renderGrocery()}
+function shiftWeek(n){const d=new Date(curMonday);d.setDate(d.getDate()+7*n);gotoWeek(d)}
+function openWeekPicker(){
+  const inp=document.getElementById("weekDate");
+  inp.value=isoDate(curMonday);
+  if(inp.showPicker){try{inp.showPicker()}catch(e){if(inp.focus)inp.focus();if(inp.click)inp.click()}}
+  else{if(inp.focus)inp.focus();if(inp.click)inp.click()}
+}
+function weekLabelText(){
+  const sun=dateOfDay(curMonday,"Sun");
+  const now=isoDate(mondayOf(new Date())), cur=isoDate(curMonday);
+  let tag="";
+  if(cur===now)tag=" (this week)";
+  else{const diff=Math.round((new Date(cur)-new Date(now))/6048e5);if(diff===1)tag=" (next week)";else if(diff===-1)tag=" (last week)"}
+  return fmtShort(curMonday)+" – "+fmtShort(sun)+" "+sun.getFullYear()+tag;
+}
+
+function allDishes(){
+  return D.map((a,i)=>toDish(a,i,false)).concat(customDishes.map((a,i)=>toDish(a,i,true)));
+}
+function byId(id){return allDishes().find(d=>d.id===id)}
+
+/* ---- conflict + variety logic ----
+   STAPLES never conflict (eaten daily in Indian homes).
+   Everything else is a "hero" ingredient: if it appears earlier the SAME DAY, the dish is excluded (shown greyed).
+   Dishes already used this week are deprioritised + badged. */
+const STAPLES=new Set(["wheat","rice","dahi","milk","dal","bread","mixveg","peanut","fruit","oats","semolina","quinoa","wrap","ragi","fortified"]);
+function heroTags(d){return d.tags.filter(t=>!STAPLES.has(t))}
+
+function dayHeroesExcept(day,meal){
+  const h=new Set();
+  MEALS.forEach(([m])=>{
+    if(m===meal)return;
+    const id=(week[day]||{})[m];
+    if(id){const d=byId(id);if(d)heroTags(d).forEach(t=>h.add(t))}
+  });
+  return h;
+}
+function weekUseCount(id){
+  let n=0;DAYS.forEach(day=>MEALS.forEach(([m])=>{if((week[day]||{})[m]===id)n++}));return n;
+}
+function conflictsWith(d,heroes){return heroTags(d).some(t=>heroes.has(t))}
+
+/* ---- roti logic: rolled breads take time & skill — weekend/occasional only.
+   Frozen/store-bought rotis are exempt (that's the weekday shortcut). ---- */
+function isRoti(d){return /roti|paratha|thepla|poori|chapati/i.test(d.name)&&!/frozen|store-bought|ready/i.test(d.name)}
+function isWeekend(day){return day==="Sat"||day==="Sun"}
+
+/* ---- B12 & D3 coverage (vegetarian sources) ----
+   B12: dairy, fortified nutritional yeast, fortified plant milk/cereal, Marmite.
+   D3/D2: UV-exposed mushrooms (or home-sunned), fortified foods. */
+const VIT={
+  b12:new Set(["milk","dahi","paneer","nutyeast","fortified","marmite","cheese","feta","halloumi"]),
+  d3:new Set(["mushroom","fortified"])
+};
+function vitB12(d){return d.tags.some(t=>VIT.b12.has(t))}
+function vitD3(d){return d.tags.some(t=>VIT.d3.has(t))}
+function vitBadges(d){
+  return (vitB12(d)?'<span class="badge bg-b12">B12</span>':'')
+       +(vitD3(d)?'<span class="badge bg-d3">D&#9728;&#65039;</span>':'');
+}
+
+/* ---- smart-eating tips per ingredient (avoid weight gain) ---- */
+const TIPS={
+paneer:"Don't deep-fry paneer — add it raw or lightly pan-seared to gravies. ~100g per person is enough; it's calorie-dense.",
+rice:"Portion: ~1 katori (150g cooked) per person. Cooked-and-cooled rice (like next-day fridge rice) forms resistant starch — gentler on blood sugar.",
+wheat:"Cap at 2 rotis per meal; skip the ghee on top or use ½ tsp. If buying ready chapatis in London, pick brands without palm oil.",
+dahi:"Have it plain and unsweetened — the protein keeps you full. Avoid sweetened/fruit yogurts; Greek yogurt is a great high-protein swap.",
+milk:"Semi-skimmed works well for daily use; full-fat is fine in small amounts (chai).",
+dal:"Eat dal thick, not watery — more protein and fibre per bowl. Keep the tadka to 1 tsp ghee.",
+potato:"Boil, roast or air-fry — never deep-fry for daily meals. Pair with dal/dahi so the carbs digest slower.",
+bread:"Choose whole-wheat/seeded bread; toast dry instead of butter-frying. Pav is a treat, not a staple.",
+peanut:"A small handful only — peanuts are healthy but ~570 kcal per 100g adds up fast.",
+sabudana:"Almost pure starch — keep it occasional. The peanuts and dahi alongside are what add the protein.",
+poha:"Light on oil, generous on peanuts/sprouts — that's what turns poha from carbs-only into a balanced plate.",
+oats:"Use plain rolled oats, not sweetened instant sachets. Add dahi/milk + nuts for protein.",
+besan:"Great protein base. Make chillas with minimal oil on a good non-stick pan.",
+soya:"One of the best vegetarian proteins. Squeeze soaked chunks well and avoid heavy cream gravies with it.",
+rajma:"Excellent protein + fibre. The rajma isn't the problem — the extra rice is. One katori rice, extra rajma.",
+chana:"Same rule: more chole, less rice/bhatura. Boiled chana is a perfect evening snack too.",
+sprouts:"Protein + fibre powerhouse. Eat raw or lightly steamed; a squeeze of lemon boosts iron absorption.",
+moong:"Lightest dal to digest — ideal for dinner. Moong chilla > plain paratha for weekday breakfasts.",
+fruit:"Eat fruit whole, don't juice it — juicing removes the fibre and spikes sugar.",
+dosa:"Ask for (or make) it with less oil/butter; sambar + chutney add the protein. One masala dosa is a full meal — skip sides.",
+idli:"Steamed = naturally light. It's the coconut chutney oil and vada that add up, not the idli.",
+sambar:"Vegetable-loaded sambar is basically a protein-fibre soup — have an extra ladle instead of extra rice.",
+semolina:"Rava is refined — load the upma with vegetables and peanuts to balance it.",
+vermicelli:"Same as rava — the vegetables you add matter more than the seviyan.",
+mixveg:"Fill half your plate with sabzi before adding rice/roti — oldest trick, still the best.",
+palak:"Add a squeeze of lemon — vitamin C helps absorb the iron. Go easy on cream in palak paneer.",
+mushroom:"D3 hack: place sliced mushrooms gill-side up in midday sun for 15–20 min before cooking — they make ~10μg vitamin D per 100g (a full day's dose). UK supermarkets also sell 'vitamin D mushrooms' (UV-treated). Low-calorie and filling; sauté, don't cream-load.",
+peas:"Frozen peas are as nutritious as fresh — keep a bag permanently in the freezer.",
+cauliflower:"Roast or sabzi — avoid the deep-fried gobi 65/manchurian version on weekdays.",
+bhindi:"Dry-sauté with minimal oil; bhindi soaks up oil fast if you're not careful.",
+baingan:"Roasted bharta is one of the lowest-calorie sabzis — eat freely.",
+lauki:"Very light and hydrating — ideal dinner vegetable.",
+capsicum:"Vitamin C rich; great raw in salads too.",
+methi:"Slightly bitter = blood-sugar friendly. Fresh or kasuri, use liberally.",
+corn:"Sweet corn is starchy — treat it as a carb, not a vegetable.",
+tomato:"Cooked tomato (gravies) releases more lycopene — one of the perks of Indian cooking.",
+daliya:"Whole wheat + fibre — one of the best Indian breakfasts for steady energy.",
+idli_dosa_batter:"", // unused
+chana_snack:""
+};
+TIPS.quinoa="Complete plant protein — rinse well before cooking. A great rice swap 2–3× a week.";
+TIPS.wrap="Pick whole-wheat wraps (~200 kcal each); one wrap, generously filled, beats two thin ones.";
+TIPS.tofu="Soya protein ≈ paneer protein at half the fat. Press firm tofu 10 min, then marinate — it soaks up masala beautifully. B12/D only if you buy fortified tofu (check label).";
+TIPS.ragi="Ragi (finger millet) = calcium + iron + slow carbs. Roast the flour first to remove rawness. Great smoothie/dosa base — far steadier energy than refined flour.";
+TIPS.nutyeast="Nutritional yeast ('nooch'): 1 tbsp of a fortified brand ≈ 2.4μg B12 = 100% of your daily need. Cheesy-nutty taste — sprinkle on dal, khichdi, sabzi, popcorn. Buy FORTIFIED (e.g. Engevita blue tub in UK).";
+TIPS.fortified="Fortified soy/oat milk and cereals carry added B12 + D. Shake the carton (vitamins settle), and don't boil hard — gentle heat preserves B12.";
+TIPS.marmite="Marmite is B12-fortified (~1.9μg per 8g serving). Thin scrape is enough — it's salty. A very London answer to a vegetarian B12 gap.";
+function dishTips(d){
+  const seen=new Set(),out=[];
+  d.tags.forEach(t=>{if(TIPS[t]&&!seen.has(t)){seen.add(t);out.push(TIPS[t])}});
+  if(isRoti(d))out.push("Roti/paratha day: these take time to make fresh — save for weekends, or keep ready-made chapatis in the fridge for weekdays.");
+  out.push("General: 2–3 tsp visible fat (oil/ghee) per person per meal is plenty. Eat slowly, stop at ~80% full, keep dinner the lightest meal, and don't skip the salad.");
+  return out;
+}
+
+/* ---- recipes (built-in). User recipes/YouTube links live in dishExtras, keyed by dish name ---- */
+let dishExtras = store.get("mealplanner_extras",{}); // {dishName:{yt:"",rec:""}}
+const RECIPES={
+"Vegetable Poha with peanuts":"Rinse 1 cup thick poha in a sieve, drain. Temper mustard seeds, curry leaves and peanuts in 2 tsp oil; add onion, turmeric, veg; fold in poha + salt, cover 2 min. Lemon + coriander to finish.",
+"Masala Oats with veggies":"Sauté onion, tomato and any veg; add 1 cup rolled oats + 2 cups water, salt, turmeric, garam masala. Simmer 3–4 min till porridgey.",
+"Besan Chilla + dahi":"Whisk 1 cup besan with water to pancake consistency; add onion, tomato, chilli, ajwain, salt. Spread on non-stick with 1 tsp oil; flip once. Serve with a katori of dahi.",
+"Moong Dal Chilla + chutney":"Blend soaked moong dal with ginger + green chilli into a batter. Spread thin like dosa on non-stick; cook both sides. Stuff with crumbled paneer for +10g protein.",
+"Paneer Paratha + dahi":"Stuff atta dough with grated paneer + onion + ajwain + chilli. Roll gently, roast on tawa with ½ tsp ghee each side.",
+"Aloo Paratha + dahi":"Mash boiled potato with masala, stuff, roll, roast with ½ tsp ghee. Weekend job — freeze extras between parchment sheets.",
+"Vegetable Rava Upma":"Dry-roast 1 cup rava. Temper mustard + urad dal + curry leaves; sauté veg; add 2 cups hot water + salt, then rava in a stream, stirring till fluffy.",
+"Idli + Sambar":"Steam batter in idli moulds 10–12 min. Sambar: pressure-cook toor dal + veg; add tamarind water + sambar powder + mustard-hing tadka.",
+"Masala Dosa + chutney":"Spread batter thin on a hot tawa, drizzle oil. Filling: boiled potato tempered with mustard, onion, turmeric, curry leaves.",
+"Rava Idli + chutney":"Mix roasted rava + dahi + salt, rest 20 min; add Eno, steam 12 min.",
+"Vermicelli (Seviyan) Upma":"Roast seviyan till golden. Temper, sauté veg, add seviyan + hot water; cover till absorbed.",
+"Moong Sprouts Chaat Bowl":"Toss sprouts with onion, tomato, cucumber, chaat masala, lemon. Top with a spoon of dahi.",
+"Vegetable Daliya":"Roast daliya in 1 tsp ghee; pressure-cook 2 whistles with veg, salt and 3× water.",
+"Gobi Paratha + dahi":"Grate gobi, salt it, squeeze ALL the water out; mix with masala, stuff, roll, roast.",
+"Methi Thepla + dahi":"Knead atta with chopped methi, dahi, turmeric, chilli powder and 1 tsp oil. Roll thin, roast. Stays soft 3–4 days.",
+"Greek Yogurt + fruit + granola":"Layer thick yogurt, chopped fruit, 2 tbsp granola and a spoon of seeds. Done in 5 minutes.",
+"Overnight Oats with nuts & seeds":"In a jar: ½ cup oats + milk/dahi + chia + chopped fruit + nuts. Fridge overnight, eat cold.",
+"Poori Bhaji (weekend treat)":"Stiff atta dough, small pooris, deep-fry hot. Bhaji: boiled potato tempered with cumin, ginger, turmeric, green chilli.",
+"Onion-Tomato Uttapam":"Pour a thick round of dosa batter; press onion, tomato, chilli, coriander on top; drizzle oil, flip once.",
+"Sabudana Khichdi":"Soak sabudana 4h/overnight. Sauté cumin + boiled potato + green chilli; add sabudana + roasted peanut powder; toss till translucent. Lemon at the end.",
+"Paneer Bhurji on toast":"Crumble paneer into sautéed onion-tomato-capsicum with pav bhaji masala; pile onto whole-wheat toast.",
+"Boiled Chana Chaat Bowl":"Boiled chana + onion, tomato, cucumber, coriander, chaat masala, lemon. Optional dahi drizzle.",
+"Muesli + milk + banana":"Muesli + cold milk + sliced banana. Two minutes flat.",
+"Ven Pongal + Sambar":"Pressure-cook rice + moong dal (1:1) till soft. Temper black pepper, cumin, ginger, cashew in ghee; mix in.",
+"Pesarattu (moong dosa) + chutney":"Blend soaked whole moong + ginger + chilli. Spread like dosa; top with chopped onion; crisp both sides.",
+"Dal Tadka + Jeera Rice + salad":"Pressure-cook toor dal with turmeric. Tadka: ghee, cumin, garlic, hing, dried chilli — pour over. Jeera rice: sauté cumin, add rice + water 1:2.",
+"Rajma + Rice + salad":"Soak rajma overnight; pressure-cook 6–7 whistles. Simmer in bhuna onion-tomato-ginger gravy 15 min till creamy.",
+"Chole + Rice":"Soak chole overnight; pressure-cook with a tea bag (deep colour). Simmer in bhuna onion-tomato masala + chole masala.",
+"Chole + 2 Roti + salad":"Same Sunday chole, with 2 phulkas and kachumber salad.",
+"Kadhi Chawal":"Whisk 1 cup sour dahi + 3 tbsp besan + turmeric + 3 cups water. Simmer 20 min, stirring. Tadka: methi seeds, hing, curry leaves, dried chilli.",
+"Paneer Butter Masala + 2 Roti":"Blend cooked onion-tomato-cashew into smooth gravy; season with kasuri methi + garam masala; add paneer + a measured 1 tbsp butter.",
+"Palak Paneer + 2 Roti":"Sauté garlic + onion + tomato; add blanched palak purée; simmer, add paneer. One spoon of malai, not half a cup.",
+"Matar Paneer + 2 Roti":"Onion-tomato gravy + peas, simmer 10 min; paneer in the last 5.",
+"Kadai Paneer + 2 Roti":"Coarsely crush dhania + dried chilli (kadai masala). Sauté capsicum + onion petals; add gravy base + paneer + masala.",
+"Paneer Tikka + green chutney + salad":"Marinate paneer + capsicum + onion in thick dahi + tandoori masala + besan (30 min–24 h). Grill or air-fry 12–15 min. Serve on a big salad.",
+"Paneer Bhurji + 2 Roti":"Crumbled paneer into onion-tomato-chilli masala; finish with coriander.",
+"Paneer Pulao + Raita":"Sauté whole spices + onion; add rice, water and paneer cubes + peas; cook covered. Whisked-dahi raita alongside.",
+"Aloo Gobi + Dal + 2 Roti":"Cumin + ginger tadka; add potato + gobi + turmeric + dhania powder; cover on low till tender. Serve with a katori of dal.",
+"Bhindi Masala + Dal + 2 Roti":"Dry-sauté bhindi first, no lid (kills the slime); set aside. Make onion-tomato masala; combine.",
+"Baingan Bharta + 2 Roti + dahi":"Roast baingan over flame/220°C oven till collapsed; peel, mash into sautéed garlic-onion-tomato.",
+"Veg Pulao + Boondi Raita":"Whole spices + mixed veg + rice, 1:1.75 water, covered till done.",
+"Veg Biryani + Raita":"Layer 70%-cooked rice over spiced veg masala; seal and dum on lowest flame 15 min.",
+"Dal Makhani + 2 Roti":"Whole urad + a little rajma, slow-cooked till creamy; simmer with tomato purée + 1 tbsp butter. Better the next day.",
+"Soya Chunk Curry + Rice":"Boil chunks 5 min, squeeze hard. Simmer in onion-tomato gravy with garam masala 10 min.",
+"Soya Keema + 2 Roti":"Pulse soaked, squeezed chunks to keema. Bhuno with onion, ginger-garlic, tomato + peas.",
+"Mix Veg + Dal + 2 Roti":"Seasonal veg sautéed with cumin-onion-tomato masala; dal on the side.",
+"Lauki Chana Dal + 2 Roti":"Pressure-cook lauki + soaked chana dal + tomato + turmeric, 3 whistles. Ghee-cumin tadka.",
+"Sambar + Rice + Beans Poriyal":"Sambar as usual. Poriyal: steam chopped beans; temper mustard + urad dal; toss with fresh coconut.",
+"Curd Rice + pickle + papad":"Mash warm rice with dahi, salt, splash of milk. Temper mustard, curry leaves, ginger, hing. Chill before eating.",
+"Lemon Rice + peanuts + salad":"Temper mustard, chana dal, peanuts, turmeric, curry leaves; toss with rice + lemon juice off the heat.",
+"Tamarind (Puliyogare) Rice + salad":"Toss rice with pulikachal (tamarind-jaggery-spice paste) + roasted peanuts.",
+"Veg Khichdi + dahi + papad":"Rice + moong dal + veg + turmeric, pressure-cook 3 whistles with extra water. 1 tsp ghee on top.",
+"Moong Dal Khichdi (light)":"Rice + moong dal 1:1, cooked soft. Cumin-ghee tadka. Comfort in 20 minutes.",
+"Palak Dal + Rice":"Cooked toor dal + palak purée, simmered together; garlic-red chilli tadka.",
+"Khichdi + Kadhi":"Light khichdi with a ladle of tangy kadhi over it.",
+"Lauki Kofta Curry + 2 Roti":"Grated lauki (squeezed) + besan balls — appe pan or air-fryer, not deep-fried. Simmer in onion-tomato gravy.",
+"Malai Kofta + 2 Roti (weekend treat)":"Paneer-potato koftas, shallow/air-fried; rich cashew-tomato gravy. Weekend indulgence — enjoy it properly.",
+"Veg Kathi Roll":"Sauté veg (+ paneer if you like) with tikka masala; roll in a warmed store-bought tortilla with green chutney + onions.",
+"Chana Masala Wrap":"Lightly mash Sunday chole; roll in a warm wrap with onion, chutney and a dahi drizzle.",
+"Dosa + Sambar (dinner)":"Weekend batter, weeknight dosa — 10 minutes, tawa to table.",
+"Veg Fried Rice + Gobi Manchurian":"Day-old rice, highest flame, soy + veg. Manchurian: air-fry/bake gobi florets, toss in sauce — skip the deep fry.",
+"Paneer Fried Rice":"Day-old rice + paneer cubes + veg on high flame with soy + white pepper.",
+"Rasam + Rice + Potato Roast":"Rasam: tamarind + tomato + rasam powder + crushed garlic, boiled 10 min. Potato roast on tawa with minimal oil.",
+"Methi Malai Matar + 2 Roti":"Methi + peas in a light cashew-onion gravy. A splash of milk does the 'malai' job.",
+"Sev Tamatar + 2 Roti":"Tangy tomato-jeera gravy; add sev at the table so it stays crunchy. 15 minutes.",
+"Dahi Aloo + 2 Roti":"Boiled potato simmered in whisked-dahi gravy with cumin + ginger. No onion needed — genuinely quick.",
+"Matar Mushroom + 2 Roti":"Onion-tomato masala; add sliced mushroom + peas; cover 5 min.",
+"Mushroom Masala + Rice":"Gravy base + sautéed mushrooms; kasuri methi to finish.",
+"Mini Veg Thali (dal + sabzi + roti + dahi)":"Assembly job: Sunday dal + tonight's quick sabzi + rotis (or rice) + dahi + salad.",
+"Stuffed Capsicum + Dal + Roti":"Halve capsicums, stuff with spiced potato-paneer mash; bake 25 min at 190°C.",
+"Grilled Veg Sandwich + Tomato Soup":"Layer veg + green chutney (cheese optional); grill. Soup: blend sautéed tomato + garlic — needs no cream.",
+"Veg Momos + clear soup (weekend)":"Cabbage-carrot-paneer filling; pleat, steam 12 min. Make a big batch and freeze — steam straight from frozen.",
+"Pav Bhaji":"Boil + mash mixed veg; bhuno with pav bhaji masala + measured butter. Toast pav dry, not swimming in butter.",
+"Dahi Vada + Chana Chaat (light dinner)":"Soak vadas (appe-pan version works) in thin whisked dahi; top with chutneys. Chana chaat adds the protein.",
+"Aloo Matar + 2 Roti":"Cumin tadka, onion-tomato, potato + peas; simmer covered 10 min.",
+"Corn Palak + 2 Roti":"Palak purée + sweet corn + light masala; splash of milk instead of cream.",
+"Hara Bhara Kebab + Dal + Roti":"Blitz palak + peas + potato + besan; shape patties, air-fry or pan-fry. Serve with dal.",
+"Tinda / Turai Sabzi + Dal + Roti":"Simple cumin-tomato sabzi, covered till soft. Light and fast.",
+"Chapati Noodles (leftover roti stir-fry)":"Slice leftover rotis into ribbons; stir-fry with veg, soy and chilli sauce. Dinner from 'nothing' in 15 min.",
+"Rajma Salad Bowl (protein bowl)":"Boiled rajma + cucumber, onion, tomato, corn; lemon + chaat masala dressing; dahi on the side.",
+"Vegetable Handvo":"Fermented besan-dahi-veg batter (overnight); pan-cook or bake till golden crust. A tray lasts 2 days.",
+"Thepla + Sukhi Bhaji + chaas":"Weekend theplas + a quick dry aloo sabzi + a glass of chaas.",
+"Palak Paneer Rice Bowl":"Heat Sunday palak purée + gravy base, add paneer; serve over 1 katori jeera rice. 15 minutes if prepped.",
+"Kadai Paneer Rice Bowl":"Kadai masala + capsicum + paneer over steamed rice — the roti-free version.",
+"Matar Paneer + Jeera Rice":"Gravy base + peas + paneer, over cumin-tempered rice.",
+"Soya Keema Rice Bowl":"Reheat freezer-batch soya keema over rice; raw onion + lemon on top.",
+"Chole Quinoa Protein Bowl":"Warm Sunday chole over rinsed, boiled quinoa (15 min); kachumber on top. Protein + fibre monster.",
+"Rajma Quinoa Bowl":"Sunday rajma over quinoa; dahi drizzle + coriander.",
+"Dal-Sabzi Thali Bowl (rice)":"One bowl: rice + Sunday dal + tonight's 10-minute sabzi + salad on the side.",
+"Veg Tehri (one-pot rice)":"Sauté whole spices + veg + potato; add rice + water; pressure-cook 2 whistles. Serve with dahi.",
+"Bisi Bele Bath":"Rice + toor dal + veg + BBB powder + tamarind, cooked together in one pot; 1 tsp ghee to finish.",
+"Tomato Rice + peanuts":"Tangy tomato-onion masala tossed with rice + roasted peanuts.",
+"Paneer Tikka Wrap (store-bought tortilla)":"Air-fry marinated paneer; roll in a warmed tortilla with chutney, onions and a little dahi.",
+"Dal Fry + Frozen Roti (store-bought)":"Bulk dal + fresh tadka; frozen rotis 2 min each on the tawa. The fastest 'proper' Indian dinner there is.",
+"Chana Salad Bowl + toasted pita":"Sunday chole + chopped salad + lemon-cumin dressing; dry-toasted pita wedges for crunch.",
+"Curd Semiya (yogurt vermicelli bowl)":"Cook and cool vermicelli; mix with whisked dahi + salt; mustard-curry leaf tadka; pomegranate on top.",
+"Ragi-Banana-Peanut Smoothie (fortified soy milk)":"Blend 2 tbsp roasted ragi flour + 1 banana + 1 tbsp peanut butter + 300ml FORTIFIED soy milk + pinch of cardamom + ice. Optional: 1 tsp cocoa. B12 + D from the fortified milk, calcium + iron from ragi, protein from soy + peanut.",
+"Tofu Bhurji + seeded toast":"Press and crumble 200g firm tofu. Sauté onion, tomato, capsicum with turmeric, chilli, pav bhaji masala; add tofu + kala namak (gives the eggy note), 2 min. Finish with coriander; serve on dry-toasted seeded bread. Use fortified tofu/sprinkle nooch for B12.",
+"Fortified Cereal Bowl + nuts, seeds & fruit":"Pick a low-sugar FORTIFIED cereal (check label: B12 + vit D). Add cold milk or fortified soy milk, a handful of mixed nuts + seeds, chopped fruit. 5-minute B12+D breakfast for rushed mornings.",
+"Marmite-Cheese Toast + fruit":"Thin scrape of Marmite on whole-wheat toast, light layer of grated cheese, grill 2 min. Glass of milk + fruit alongside. Marmite ≈ 1.9μg B12 per serving — the classic UK vegetarian B12 fix.",
+"Ragi Dosa + sambar":"Whisk 1 cup ragi flour + ¼ cup rava + ½ cup dahi + water into thin batter; rest 20 min with onion, chilli, curry leaves. Spread like rava dosa on hot tawa. Serve with sambar for the protein.",
+"Sunned Mushroom Masala + jeera rice":"THE D3 TRICK: slice 250g mushrooms, lay gill-side up in direct midday sun 15–20 min (windowsill works) — they generate ~10μg vitamin D/100g. Then: sauté in onion-tomato gravy base with garam masala + kasuri methi. Serve with jeera rice + a katori of dahi (adds B12).",
+"Soya-Mushroom Keema Bowl":"Blitz soaked-and-squeezed soya chunks + sunned mushrooms in 3–4 pulses. Brown with onion-ginger-garlic, tomato, keema masala, peas; simmer 10 min. Double protein (soya) + vitamin D (mushrooms) in one bowl. Freezes brilliantly.",
+"Tofu Tikka Rice Bowl":"Marinate pressed tofu cubes in dahi + tandoori masala + lemon (30 min–2 days). Pan-sear till charred; serve over rice with onion, mint chutney and extra marinade drizzled. Dahi marinade adds B12; tofu brings 26g protein.",
+"Shiitake-Veg Fried Rice":"Shiitake are the vitamin-D champions of mushrooms — sun them 20 min first. Stir-fry with garlic, beans, corn, spring onion on high heat; add day-old rice + soy sauce + pepper. Finish with a nooch sprinkle for B12.",
+"Nooch Dal-Khichdi (cheesy, no cheese)":"Pressure-cook ½ cup moong dal + ½ cup rice + turmeric + veg (3 whistles). Ghee-jeera-hing tadka, then stir in 2 tbsp fortified nutritional yeast — tastes cheesy and delivers a full day's B12. Comfort food that fixes a deficiency.",
+"Paneer & Sunned-Mushroom Bhuna + frozen roti":"Sun the sliced mushrooms 15–20 min. Bhuna: cook onion-tomato gravy base till oil separates; add mushrooms, then paneer cubes, kasuri methi. Frozen rotis 2 min each on tawa. Paneer (B12) + sunned mushrooms (D) + 27g protein.",
+"Tempeh Stir-fry Bowl + broccoli & rice":"Slice 200g tempeh, pan-sear golden in 2 tsp oil. Stir-fry broccoli, capsicum, garlic-ginger on high; sauce of soy, a little honey, chilli and cornflour-water. Toss tempeh back in; serve over rice. Tempeh = fermented soy — 28g protein and easy on the gut.",
+"Paneer Burrito Bowl (black beans, corn, salsa)":"Layer rice, warmed tinned black beans (cumin + salt), charred corn, jeera-toasted paneer cubes, fresh tomato-onion-coriander salsa, squeeze of lime, spoon of dahi. Meal-prep gold: keep components separate, assemble in 2 min.",
+"Creamy Red-Lentil Pasta":"Use red-lentil penne (UK supermarkets stock it) or regular pasta + ½ cup cooked masoor. Sauce: blitz sautéed onion, garlic, tomatoes with a splash of milk; simmer with oregano + chilli flakes. Toss pasta; finish with nooch or grated cheese.",
+"Halloumi & Chickpea Traybake + couscous":"Toss chickpeas, peppers, red onion, courgette with olive oil, smoked paprika, cumin; roast 25 min at 200°C, adding halloumi slabs for the last 10. Serve over 5-minute couscous with lemon + mint dahi.",
+"Greek Chickpea-Feta Salad + pita":"Cucumber, tomato, red onion, olives + 1.5 cups boiled chole; crumble 60g feta, dress with olive oil, lemon, oregano. Warm pita alongside. No-cook dinner for hot days.",
+"Falafel-Hummus Mezze Plate":"Blitz soaked (not boiled) chana with onion, garlic, herbs, cumin; shape and bake 25 min at 200°C. Plate with hummus, warm pita, cucumber-tomato salad and pickles.",
+"Peanut Tofu Noodles (pad-thai style)":"Sear pressed tofu cubes. Sauce: 2 tbsp peanut butter, soy, lime, chilli, splash of hot water. Toss with cooked noodles, quick-fried veg and the tofu; top with crushed peanuts + spring onion.",
+"Edamame & Paneer Fried Rice":"Wok on high: garlic, spring onion, day-old rice, frozen edamame, peas and paneer cubes; season with soy + white pepper. One pan, 20 minutes, 25g protein.",
+"Miso Tofu Noodle Soup Bowl":"Simmer garlic, ginger, mushrooms in 500ml water 5 min; off the heat whisk in 1.5 tbsp miso (don't boil miso). Add cooked noodles, seared tofu, spinach, spring onion and chilli oil.",
+"Bean & Cheese Quesadillas + salsa":"Mash tinned black beans with cumin, chilli powder, lime. Spread on tortilla, top with grated cheese, fold; toast on tawa till crisp both sides. Cut in wedges, serve with salsa + dahi.",
+"White Bean Pesto Pasta":"Cook pasta; in the last 2 min add a drained tin of cannellini beans to the pot. Toss with pesto loosened with pasta water, black pepper and grated cheese. 25 minutes, mostly unattended.",
+"PB-Banana Greek Yogurt Smoothie Bowl":"Blend 200g Greek yogurt, 1 banana, 1.5 tbsp peanut butter, 2 tbsp oats, splash of milk, ice. Pour thick into a bowl; top with granola, seeds and fruit. 25g protein before 9am.",
+"Paneer Shakshuka (no egg) + sourdough":"Simmer onion, peppers, garlic, tinned tomatoes with paprika + cumin 10 min. Nestle in thick paneer slabs, cover 5 min; finish with coriander. Mop up with toasted sourdough.",
+"Tempeh Rasher Sandwich + salad":"Slice tempeh thin; marinate in soy, smoked paprika, maple/jaggery, drop of oil; pan-crisp 2–3 min a side. Stack on toasted bread with tomato, lettuce and a dahi-mayo. Side salad to finish."
+};
+
+/* ---- grocery mapping: tag -> [category, item] ---- */
+const GROC={
+paneer:["Dairy","Paneer (~200g per dish)"],dahi:["Dairy","Dahi / Greek yogurt (big tub)"],milk:["Dairy","Milk"],
+dal:["Dals & Legumes","Toor / moong dal"],rajma:["Dals & Legumes","Rajma (dry, soak Sat night)"],chana:["Dals & Legumes","Kabuli chana (dry)"],
+moong:["Dals & Legumes","Whole moong (batter / sprouting)"],sprouts:["Dals & Legumes","Moong for sprouting"],soya:["Dals & Legumes","Soya chunks"],besan:["Dals & Legumes","Besan"],
+rice:["Grains & Breads","Rice (basmati / everyday)"],wheat:["Grains & Breads","Atta — or ready-made chapatis (weekday saver!)"],bread:["Grains & Breads","Whole-wheat bread / pav"],
+poha:["Grains & Breads","Poha"],oats:["Grains & Breads","Rolled oats"],semolina:["Grains & Breads","Sooji / rava"],daliya:["Grains & Breads","Daliya"],
+vermicelli:["Grains & Breads","Vermicelli (seviyan)"],sabudana:["Grains & Breads","Sabudana"],
+idli:["Grains & Breads","Idli/dosa batter (ready-made saves the grind)"],dosa:["Grains & Breads","Idli/dosa batter (ready-made saves the grind)"],
+sambar:["Dals & Legumes","Toor dal + sambar powder"],
+potato:["Vegetables & Fresh","Potatoes"],palak:["Vegetables & Fresh","Spinach (fresh or frozen)"],cauliflower:["Vegetables & Fresh","Cauliflower"],
+bhindi:["Vegetables & Fresh","Bhindi / okra"],baingan:["Vegetables & Fresh","Baingan / aubergine"],lauki:["Vegetables & Fresh","Lauki / dudhi"],
+peas:["Vegetables & Fresh","Frozen peas"],mushroom:["Vegetables & Fresh","Mushrooms"],capsicum:["Vegetables & Fresh","Capsicum / peppers"],
+methi:["Vegetables & Fresh","Fresh methi (or kasuri methi)"],corn:["Vegetables & Fresh","Sweet corn"],tomato:["Vegetables & Fresh","Tomatoes (extra for gravy)"],
+mixveg:["Vegetables & Fresh","Mixed veg: beans, carrots, gobi, salad veg"],beans:["Vegetables & Fresh","French beans"],
+fruit:["Vegetables & Fresh","Fruit: bananas + seasonal"],peanut:["Pantry","Peanuts"],
+quinoa:["Grains & Breads","Quinoa"],wrap:["Grains & Breads","Whole-wheat tortilla wraps"],
+ragi:["Grains & Breads","Ragi (finger millet) flour"],tofu:["Dals & Legumes","Firm tofu (soya)"],
+nutyeast:["Pantry","Nutritional yeast — FORTIFIED (Engevita blue tub)"],marmite:["Pantry","Marmite (B12-fortified)"],
+fortified:["Pantry","Fortified soy/oat milk + fortified low-sugar cereal"],
+tempeh:["Dals & Legumes","Tempeh"],edamame:["Dals & Legumes","Frozen edamame"],
+blackbean:["Dals & Legumes","Black beans (tinned)"],whitebean:["Dals & Legumes","Cannellini / white beans (tinned)"],
+pasta:["Grains & Breads","Pasta (red-lentil pasta = extra protein)"],noodles:["Grains & Breads","Noodles (rice / wheat)"],
+couscous:["Grains & Breads","Couscous"],cheese:["Dairy","Cheese (cheddar / mozzarella)"],
+feta:["Dairy","Feta"],halloumi:["Dairy","Halloumi"],
+hummus:["Pantry","Hummus (or tahini to make your own)"],pb:["Pantry","Peanut butter"],
+miso:["Pantry","Miso paste"],broccoli:["Vegetables & Fresh","Broccoli"]
+};
+const PANTRY_ALWAYS=["Onions (2kg) & tomatoes (1kg) — gravy base","Ginger, garlic, green chillies","Fresh coriander & mint","Cooking oil + small ghee","Spice check: haldi, jeera, dhania powder, garam masala, hing","Salad veg: cucumber, carrots, lemon","Chaas / buttermilk or extra dahi to make it","Protein top-up: whey/pea protein tub + Greek yogurt (closes the daily 90g gap)"];
+/* ---- grocery day filter: empty set = whole week ---- */
+let grocDays=new Set();
+function toggleGrocDay(day){
+  if(day==="ALL")grocDays.clear();
+  else if(grocDays.has(day))grocDays.delete(day);
+  else grocDays.add(day);
+  if(grocDays.size===DAYS.length)grocDays.clear(); // all selected = whole week
+  renderGrocery();
+}
+function renderGrocChips(){
+  const el=document.getElementById("grocChips");if(!el)return;
+  el.innerHTML="";
+  const mk=(label,on,cb)=>{const b=document.createElement("button");b.className="chip"+(on?" on":"");b.textContent=label;b.onclick=cb;el.appendChild(b)};
+  mk("Whole week",grocDays.size===0,()=>toggleGrocDay("ALL"));
+  DAYS.forEach(day=>mk(day,grocDays.has(day),()=>toggleGrocDay(day)));
+}
+function renderGrocery(){
+  const el=document.getElementById("groceryContent");if(!el)return;
+  renderGrocChips();
+  const days=grocDays.size?DAYS.filter(d=>grocDays.has(d)):DAYS;
+  const items=new Map(); // "cat|item" -> count
+  let any=false;
+  days.forEach(day=>MEALS.forEach(([m])=>{
+    const id=(week[day]||{})[m];if(!id)return;const d=byId(id);if(!d)return;any=true;
+    const done=new Set();
+    d.tags.forEach(t=>{const g=GROC[t];if(g&&!done.has(g[1])){done.add(g[1]);const k=g[0]+"|"+g[1];items.set(k,(items.get(k)||0)+1)}});
+  }));
+  if(!any){el.innerHTML=grocDays.size
+    ?"<p class='empty-note'>No meals planned for "+days.join(", ")+" yet — plan those days or switch back to Whole week.</p>"
+    :"<p class='empty-note'>Plan your week first (or hit Auto-fill) and your shopping list will appear here.</p>";return}
+  const cats={};
+  items.forEach((n,k)=>{const [cat,item]=k.split("|");(cats[cat]=cats[cat]||[]).push([item,n])});
+  const order=["Vegetables & Fresh","Dairy","Dals & Legumes","Grains & Breads","Pantry"];
+  let html='<div class="prep-cols">';
+  order.forEach(cat=>{
+    if(!cats[cat])return;
+    html+='<div class="prep-card"><h3>'+esc(cat)+'</h3><ul>';
+    cats[cat].sort((a,b)=>b[1]-a[1]).forEach(([item,n])=>{
+      html+='<li><input type="checkbox"><span>'+esc(item)+' <span style="color:var(--muted);font-size:11px">· used in '+n+' meal'+(n>1?"s":"")+'</span></span></li>';
+    });
+    html+='</ul></div>';
+  });
+  html+='<div class="prep-card"><h3>&#129474; Pantry staples (check stock)</h3><ul>';
+  PANTRY_ALWAYS.forEach(p=>html+='<li><input type="checkbox"><span>'+esc(p)+'</span></li>');
+  html+='</ul></div></div>';
+  el.innerHTML=html;
+}
+
+/* ---- balance engine: protein-first profile ----
+   Goal: high protein + fibre + vitamins, moderate carbs, lower fat.
+   p 90g/day is ambitious for vegetarian food — the app tells you exactly
+   how to close the gap (protein sides or a supplement scoop) when meals alone can't. */
+const TARGET={cal:[1900,2200],p:90,pMin:70,mealP:18,fib:30,pPct:[18,30],cPct:[38,52],fPct:[18,30]};
+const PROTEIN_FIXES="close it with: a scoop of whey/pea protein in milk or chaas (+24g), 200g Greek yogurt (+20g), 100g paneer (+18g), a bowl of moong sprouts (+9g), or 2 tbsp nooch on the dal (+5g & B12)";
+function dayTotals(day){
+  const t={cal:0,p:0,c:0,f:0,fib:0,n:0};
+  MEALS.forEach(([m])=>{const id=(week[day]||{})[m];if(id){const d=byId(id);if(d){t.cal+=d.cal;t.p+=d.p;t.c+=d.c;t.f+=d.f;t.fib+=d.fib;t.n++}}});
+  return t;
+}
+function macroPcts(t){
+  const pc=t.p*4,cc=t.c*4,fc=t.f*9,tot=pc+cc+fc||1;
+  return {p:Math.round(pc/tot*100),c:Math.round(cc/tot*100),f:Math.round(fc/tot*100)};
+}
+function dayVits(day){
+  let b12=false,d3=false;
+  MEALS.forEach(([m])=>{const id=(week[day]||{})[m];if(id){const d=byId(id);if(d){if(vitB12(d))b12=true;if(vitD3(d))d3=true}}});
+  return {b12,d3};
+}
+function evalDay(day){
+  const t=dayTotals(day);
+  const vits=dayVits(day);
+  if(t.n<3)return{t,score:null,tips:[],pct:macroPcts(t),vits};
+  const pct=macroPcts(t);const tips=[];let score=100;
+  if(!vits.b12){score-=6;tips.push("No B12 source today. Quick fixes: a katori of dahi/glass of milk with any meal, 1 tbsp fortified nutritional yeast on the dal, or a Marmite toast.")}
+  if(!vits.d3){score-=4;tips.push("No vitamin D source today. Add sunned/UV mushrooms to a sabzi, or a glass of fortified soy milk. (Keep the NHS-advised D supplement through UK winters.)")}
+  if(t.p<TARGET.p){
+    const gap=TARGET.p-t.p;
+    if(t.p<TARGET.pMin){score-=18;tips.push("Protein is low ("+t.p+"g vs "+TARGET.p+"g goal — "+gap+"g short). Swap a dish for a paneer/soya/tofu option, and "+PROTEIN_FIXES+".")}
+    else tips.push("Protein gap: "+gap+"g to hit the "+TARGET.p+"g goal — "+PROTEIN_FIXES+".");
+  }
+  // per-meal protein check: lunch & dinner should each pull their weight
+  ["L","D"].forEach(m=>{
+    const id=(week[day]||{})[m];if(!id)return;const d=byId(id);if(!d)return;
+    if(d.p<TARGET.mealP)tips.push(({L:"Lunch",D:"Dinner"})[m]+" ('"+d.name+"') has only "+d.p+"g protein. Pair it with dahi/raita, sprouts salad, or protein-spiked chaas — or pick a protein+ dish.");
+  });
+  if(t.fib<TARGET.fib){score-=12;tips.push("Fibre is low ("+t.fib+"g vs "+TARGET.fib+"g). Add a side salad, fruit with breakfast, or swap white rice for extra dal/sabzi.")}
+  if(pct.f>TARGET.fPct[1]){score-=14;tips.push("Fat is on the higher side ("+pct.f+"% of calories). Go easy on ghee/oil today or pick a lighter dinner like khichdi or curd rice.")}
+  if(pct.c>TARGET.cPct[1]){score-=10;tips.push("Very carb-heavy day ("+pct.c+"%). Reduce rice/roti portion slightly and add dahi or paneer on the side.")}
+  if(t.cal>TARGET.cal[1]+250){score-=10;tips.push("Calories are high (~"+t.cal+" kcal). Fine occasionally — balance with a lighter day tomorrow.")}
+  if(t.cal<TARGET.cal[0]-350){score-=8;tips.push("Calories look low (~"+t.cal+" kcal). Add a mid-meal snack: fruit + nuts, chaas, or roasted chana.")}
+  return {t,score:Math.max(0,score),tips,pct,vits};
+}
+
+/* ---- planner UI ---- */
+let pickCtx=null;
+function renderWeek(){
+  const grid=document.getElementById("weekGrid");grid.innerHTML="";
+  let planned=0,totP=0,days=0;
+  DAYS.forEach(day=>{
+    const ev=evalDay(day);
+    if(ev.t.n===3){days++;totP+=ev.t.p}
+    planned+=ev.t.n;
+    const card=document.createElement("div");card.className="day-card";
+    let scoreHtml="";
+    if(ev.score!==null){
+      const cls=ev.score>=80?"score-good":ev.score>=55?"score-ok":"score-bad";
+      const label=ev.score>=80?"Balanced":ev.score>=55?"Almost there":"Needs work";
+      scoreHtml='<span class="score-chip '+cls+'">'+label+" · "+ev.score+"</span>";
+    }
+    const dDate=dateOfDay(curMonday,day);
+    const dIso=isoDate(dDate);
+    let html='<div class="day-head"><h3>'+day+' <span style="font-weight:400;font-size:11px;color:var(--muted)">'+fmtShort(dDate)+'</span></h3>'+scoreHtml+'</div>';
+    html+='<div class="stick-row"><button class="stick-add" title="Add sticker" onclick="openStickers(\''+dIso+'\')">+</button></div>';
+    MEALS.forEach(([m,label])=>{
+      const id=(week[day]||{})[m];const d=id?byId(id):null;
+      html+='<div class="slot"><div class="slot-label"><span>'+MEAL_EMOJI[m]+' '+label+'</span></div>';
+      if(d){
+        html+='<div class="slot-dish"><div><span class="name" onclick="openPicker(\''+day+'\',\''+m+'\')">'+dishEmoji(d)+' '+esc(d.name)+'</span>'
+          +(d.custom?'<span class="badge bg-custom">mine</span>':'')
+          +'<div class="macro-mini">'+d.cal+' kcal · P '+d.p+' · C '+d.c+' · F '+d.f+' · Fib '+d.fib+'</div></div>'
+          +'<div style="display:flex;align-items:center">'
+          +'<button class="book-btn" title="Recipe & eat-right tips" onclick="openDish(\''+d.id+'\')">&#128214;</button>'
+          +'<button class="x-btn" title="Remove" onclick="removeDish(\''+day+'\',\''+m+'\')">&#10005;</button></div></div>';
+      }else{
+        html+='<div class="slot-empty" onclick="openPicker(\''+day+'\',\''+m+'\')">+ pick a dish</div>';
+      }
+      html+='</div>';
+    });
+    const t=ev.t,pct=ev.pct;
+    if(t.n>0){
+      html+='<div class="day-totals"><b>'+t.cal+' kcal</b> · Protein '+t.p+'/'+TARGET.p+'g · Carbs '+t.c+'g · Fat '+t.f+'g · Fibre '+t.fib+'/'+TARGET.fib+'g'
+        +'<div class="macro-bar"><div class="mb-p" style="width:'+pct.p+'%"></div><div class="mb-c" style="width:'+pct.c+'%"></div><div class="mb-f" style="width:'+pct.f+'%"></div></div>'
+        +'P '+pct.p+'% · C '+pct.c+'% · F '+pct.f+'%'
+        +' · <span title="Vegetarian B12 sources: dairy, fortified foods, nooch, Marmite">B12 '+(ev.vits.b12?"&#10003;":"&#10007;")+'</span>'
+        +' <span title="Vegetarian D sources: sunned/UV mushrooms, fortified foods">D '+(ev.vits.d3?"&#10003;":"&#10007;")+'</span>';
+      if(ev.tips.length)html+='<div class="day-tip">&#9888;&#65039; '+ev.tips.map(esc).join("<br>&#9888;&#65039; ")+'</div>';
+      html+='</div>';
+    }
+    card.innerHTML=html+stickerHtml(dIso);
+    if(card.querySelectorAll)card.querySelectorAll(".fstick").forEach(attachSticker);
+    grid.appendChild(card);
+  });
+  document.getElementById("weekSummary").textContent = planned
+    ? planned+"/21 meals planned"+(days?" · avg protein on full days: "+Math.round(totP/days)+"g":"")
+    : "No meals planned yet — try Auto-fill!";
+  document.getElementById("weekLabel").textContent = weekLabelText();
+  saveWeek();
+}
+function removeDish(day,m){if(week[day])delete week[day][m];renderWeek();renderPrep();}
+function clearWeek(){if(confirm("Clear the whole week?")){week={};renderWeek();renderPrep();}}
+
+/* ---- picker ---- */
+function openPicker(day,meal){
+  pickCtx={day,meal};
+  document.getElementById("pickerTitle").textContent=day+" · "+MEALS.find(x=>x[0]===meal)[1];
+  const heroes=dayHeroesExcept(day,meal);
+  document.getElementById("pickerSub").textContent = heroes.size
+    ? "Hiding dishes with: "+[...heroes].join(", ")+" (already in "+day+"'s other meals)"
+    : "No ingredient conflicts today — pick anything!";
+  document.getElementById("pickerSearch").value="";
+  document.getElementById("showExcluded").checked=false;
+  document.getElementById("pickerOverlay").classList.add("open");
+  renderPicker();
+}
+function closePicker(){document.getElementById("pickerOverlay").classList.remove("open");pickCtx=null}
+document.getElementById("pickerOverlay").addEventListener("click",e=>{if(e.target.id==="pickerOverlay")closePicker()});
+
+function renderPicker(){
+  if(!pickCtx)return;
+  const {day,meal}=pickCtx;
+  const q=document.getElementById("pickerSearch").value.toLowerCase();
+  const showEx=document.getElementById("showExcluded").checked;
+  const heroes=dayHeroesExcept(day,meal);
+  const ev=evalDay(day);
+  let list=allDishes().filter(d=>d.meals.includes(meal));
+  if(q)list=list.filter(d=>d.name.toLowerCase().includes(q)||d.tags.some(t=>t.includes(q)));
+  const scored=list.map(d=>{
+    const conflict=conflictsWith(d,heroes);
+    const used=weekUseCount(d.id);
+    let s=0;
+    if(conflict)s+=1000;
+    s+=used*80;
+    if(meal==="D"&&ev.t.n===2&&ev.t.p<50&&d.p>=18)s-=40; // day low on protein → boost high-protein dinners
+    if((meal==="L"||meal==="D")&&d.p>=TARGET.mealP)s-=30; // protein-first: high-protein lunches/dinners float up
+    if((meal==="L"||meal==="D")&&d.p<12)s+=40;            // protein-light mains sink
+    if(d.c>=75)s+=15;                                     // carb-heavy dishes deprioritised
+    if(d.f>=20)s+=12;                                     // fat-heavy dishes deprioritised
+    if(d.fib>=10)s-=10;                                   // fibre bonus
+    if(isRoti(d)&&!isWeekend(day))s+=150; // fresh rotis sink to the bottom on weekdays
+    s+=Math.random()*20;
+    return {d,conflict,used,s};
+  }).filter(x=>showEx||!x.conflict).sort((a,b)=>a.s-b.s);
+  const el=document.getElementById("pickerList");
+  el.innerHTML=scored.length?"":"<p class='empty-note'>No dishes match. Try 'Show conflicting dishes' or add your own dish.</p>";
+  scored.forEach(({d,conflict,used})=>{
+    const div=document.createElement("div");
+    div.className="pick-item"+(conflict?" disabled":"");
+    div.innerHTML='<div><div class="pi-name">'+dishEmoji(d)+' '+esc(d.name)
+      +(d.p>=18?'<span class="badge bg-hi-p">protein+</span>':'')
+      +(d.cui==="S"?'<span class="badge bg-south">South</span>':'')
+      +(d.custom?'<span class="badge bg-custom">mine</span>':'')
+      +(isRoti(d)?'<span class="badge bg-roti">&#129386; weekend-better</span>':'')
+      +vitBadges(d)
+      +(used?'<span class="badge bg-used">'+used+"× this week</span>":'')
+      +(conflict?'<span class="badge bg-conflict">'+heroTags(d).filter(t=>heroes.has(t)).join(", ")+' repeat</span>':'')
+      +'</div><div class="pi-meta">'+d.cal+' kcal · P '+d.p+'g · C '+d.c+'g · F '+d.f+'g · Fib '+d.fib+'g · '+d.prep+' min</div></div>'
+      +'<button class="btn btn-primary btn-sm">'+(conflict?"Pick anyway":"Pick")+'</button>';
+    div.querySelector("button").onclick=e=>{e.stopPropagation();selectDish(d.id)};
+    if(!conflict)div.onclick=()=>selectDish(d.id);
+    el.appendChild(div);
+  });
+}
+function selectDish(id){
+  const {day,meal}=pickCtx;
+  week[day]=week[day]||{};week[day][meal]=id;
+  closePicker();renderWeek();renderPrep();
+}
+
+/* ---- auto-fill ---- */
+function autoFillWeek(){
+  week={};
+  const useCount={};
+  DAYS.forEach(day=>{
+    week[day]={};
+    const dayHeroes=new Set();
+    let dayP=0,dayB12=false,dayD3=false;
+    MEALS.forEach(([m])=>{
+      let cands=allDishes().filter(d=>d.meals.includes(m)&&!conflictsWith(d,dayHeroes));
+      // weekend: allow longer-prep dishes; weekdays prefer <=35 min
+      const isWknd=(day==="Sat"||day==="Sun");
+      cands=cands.map(d=>{
+        let s=(useCount[d.id]||0)*100 + Math.random()*30;
+        if(!isWknd&&d.prep>35)s+=25;
+        if(!isWknd&&isRoti(d))s+=400;            // fresh rotis/parathas = weekend-only
+        if(isWknd&&isRoti(d))s-=15;              // and nudge them onto weekends
+        if(m==="D"&&dayP<45&&d.p>=18)s-=35;      // boost protein at dinner if day is low
+        if(m==="D"&&d.cal>560)s+=15;             // lighter dinners
+        if(m==="L"||m==="D")s-=d.p*6;            // protein-first: every gram counts at L/D
+        else s-=d.p*3;                           // …and breakfast protein matters too
+        if((m==="L"||m==="D")&&d.p<12)s+=60;     // protein-light mains sink
+        if(d.c>=75)s+=20;                        // carb-heavy deprioritised
+        if(d.f>=20)s+=15;                        // fat-heavy deprioritised
+        if(d.fib>=10)s-=12;                      // fibre bonus
+        if(!dayB12&&vitB12(d))s-=18;             // fill the day's B12 gap
+        if(!dayD3&&vitD3(d))s-=18;               // fill the day's vitamin-D gap
+        return {d,s};
+      }).sort((a,b)=>a.s-b.s);
+      if(cands.length){
+        const pick=cands[0].d;
+        week[day][m]=pick.id;
+        useCount[pick.id]=(useCount[pick.id]||0)+1;
+        heroTags(pick).forEach(t=>dayHeroes.add(t));
+        dayP+=pick.p;
+        if(vitB12(pick))dayB12=true;if(vitD3(pick))dayD3=true;
+      }
+    });
+  });
+  renderWeek();renderPrep();toast("Week planned! Review each day's balance score, swap anything you like.");
+}
+
+/* ---- library ---- */
+let libFilter={meal:"",cui:"",tag:""};
+const FILTERS=[["meal","B","Breakfast"],["meal","L","Lunch"],["meal","D","Dinner"],["cui","N","North"],["cui","S","South"],["tag","paneer","Paneer"],["tag","dal","Dal"],["tag","rice","Rice"],["tag","_hiP","High protein"],["tag","_quick","Under 25 min"],["tag","_b12","B12 boost"],["tag","_d3","Vit D boost"],["tag","_custom","My dishes"]];
+function renderLibChips(){
+  const el=document.getElementById("libChips");el.innerHTML="";
+  FILTERS.forEach(([k,v,label])=>{
+    const b=document.createElement("button");b.className="chip"+(libFilter[k]===v?" on":"");b.textContent=label;
+    b.onclick=()=>{libFilter[k]=libFilter[k]===v?"":v;renderLibChips();renderLibrary()};
+    el.appendChild(b);
+  });
+}
+function renderLibrary(){
+  const q=(document.getElementById("libSearch").value||"").toLowerCase();
+  let list=allDishes();
+  if(q)list=list.filter(d=>d.name.toLowerCase().includes(q)||d.tags.some(t=>t.includes(q)));
+  if(libFilter.meal)list=list.filter(d=>d.meals.includes(libFilter.meal));
+  if(libFilter.cui)list=list.filter(d=>d.cui===libFilter.cui);
+  if(libFilter.tag==="_hiP")list=list.filter(d=>d.p>=18);
+  else if(libFilter.tag==="_quick")list=list.filter(d=>d.prep<=25);
+  else if(libFilter.tag==="_b12")list=list.filter(vitB12);
+  else if(libFilter.tag==="_d3")list=list.filter(vitD3);
+  else if(libFilter.tag==="_custom")list=list.filter(d=>d.custom);
+  else if(libFilter.tag)list=list.filter(d=>d.tags.includes(libFilter.tag));
+  const grid=document.getElementById("libGrid");grid.innerHTML="";
+  if(!list.length){grid.innerHTML="<p class='empty-note'>Nothing matches — clear some filters.</p>";return}
+  list.forEach(d=>{
+    const c=document.createElement("div");c.className="dish-card";
+    const mealNames=[...d.meals].map(m=>({B:"Breakfast",L:"Lunch",D:"Dinner"}[m])).join(" · ");
+    const exImg=(dishExtras[d.name]||{}).img;
+    c.innerHTML=(exImg?'<img class="dish-photo" src="'+exImg+'" style="max-height:110px;object-fit:cover" alt="My photo">':'')
+      +'<h4>'+dishEmoji(d)+' '+esc(d.name)+(d.custom?'<span class="badge bg-custom">mine</span>':'')+(d.p>=18?'<span class="badge bg-hi-p">protein+</span>':'')+vitBadges(d)+(exImg?'<span class="badge bg-custom">📷 made it</span>':'')+'</h4>'
+      +'<div class="meta">'+mealNames+' · '+(d.cui==="S"?"South Indian":d.cui==="N"?"North Indian":"Fusion")+' · '+d.prep+' min</div>'
+      +'<div class="macros-row"><span class="m-pill">'+d.cal+' kcal</span><span class="m-pill">P '+d.p+'g</span><span class="m-pill">C '+d.c+'g</span><span class="m-pill">F '+d.f+'g</span><span class="m-pill">Fib '+d.fib+'g</span></div>'
+      +(d.prepAhead?'<div class="prep-note">&#129379; '+esc(d.prepAhead)+'</div>':'')
+      +'<div style="margin-top:8px;display:flex;gap:6px">'
+      +'<button class="btn btn-ghost btn-sm" onclick="openDish(\''+d.id+'\')">&#128214; Recipe &amp; tips</button>'
+      +(d.custom?'<button class="btn btn-ghost btn-sm" onclick="deleteCustom(\''+d.id+'\')">Delete</button>':'')
+      +'</div>';
+    grid.appendChild(c);
+  });
+}
+function deleteCustom(id){
+  const i=parseInt(id.slice(1));
+  if(!confirm("Delete this dish?"))return;
+  customDishes.splice(i,1);store.set("mealplanner_custom",customDishes);
+  // remove stale ids from every saved week
+  saveWeek();
+  Object.keys(plans).forEach(wk=>{
+    const w=plans[wk];
+    DAYS.forEach(day=>MEALS.forEach(([m])=>{const cur=(w[day]||{})[m];if(cur&&cur[0]==="c"&&!byId(cur))delete w[day][m]}));
+  });
+  store.set("mealplanner_plans",plans);
+  week=plans[isoDate(curMonday)]||{};
+  renderLibrary();renderWeek();renderPrep();toast("Dish deleted");
+}
+
+/* ---- add custom dish ---- */
+const TAG_OPTIONS=["paneer","dal","rajma","chana","soya","tofu","potato","palak","cauliflower","bhindi","baingan","lauki","peas","mushroom","capsicum","methi","corn","besan","moong","sprouts","tomato","mixveg","ragi","nutyeast","fortified"];
+function initTagChecks(){
+  const el=document.getElementById("cdTags");
+  TAG_OPTIONS.forEach(t=>{
+    const l=document.createElement("label");
+    l.innerHTML='<input type="checkbox" value="'+t+'"><span>'+t+'</span>';
+    el.appendChild(l);
+  });
+}
+function analyzeCustom(save){
+  const name=document.getElementById("cdName").value.trim();
+  const p=+document.getElementById("cdP").value||0;
+  const c=+document.getElementById("cdC").value||0;
+  const f=+document.getElementById("cdF").value||0;
+  const fib=+document.getElementById("cdFib").value||0;
+  let cal=+document.getElementById("cdCal").value||0;
+  if(!cal)cal=Math.round(p*4+c*4+f*9);
+  const box=document.getElementById("cdAnalysis");
+  if(!name||(!p&&!c&&!f)){box.className="analysis show an-warn";box.innerHTML="<h4>Add a name and at least rough macros first.</h4>";return}
+  const tot=p*4+c*4+f*9||1;
+  const pp=Math.round(p*4/tot*100),cp=Math.round(c*4/tot*100),fp=Math.round(f*9/tot*100);
+  const issues=[],good=[];
+  if(pp<16)issues.push("<b>Low protein</b> ("+pp+"% of calories). Pair it with: a katori of dahi or raita (+6g), a glass of chaas, sprouts salad (+7g), a scoop of whey/pea protein on the side, or add paneer/soya/tofu to the dish itself.");
+  else good.push("Protein looks decent ("+p+"g, "+pp+"%).");
+  if(fp>33)issues.push("<b>High fat</b> ("+fp+"%). Reduce oil/ghee by half, or pair with a light, low-fat side (salad, steamed veg) instead of fried sides.");
+  else good.push("Fat is in a healthy range ("+fp+"%).");
+  if(cp>58)issues.push("<b>Carb-heavy</b> ("+cp+"%). Cut one roti / half the rice and add a protein side to balance it.");
+  if(fib<4)issues.push("<b>Low fibre</b> ("+fib+"g). Add a kachumber salad, or serve with whole veg / leave dal unstrained.");
+  else good.push("Fibre is good ("+fib+"g).");
+  const verdict=issues.length===0?"&#127881; Well balanced — great as-is!":issues.length===1?"Almost balanced — one small fix:":"Needs a little balancing:";
+  box.className="analysis show "+(issues.length?"an-warn":"an-good");
+  box.innerHTML="<h4>"+verdict+"</h4><p style='font-size:12.5px;color:var(--muted)'>"+cal+" kcal · P "+pp+"% · C "+cp+"% · F "+fp+"% (target ≈ P 18–30 · C 38–52 · F 18–30)</p>"
+    +(issues.length?"<ul>"+issues.map(x=>"<li>"+x+"</li>").join("")+"</ul>":"")
+    +(good.length&&issues.length?"<p style='font-size:12px;margin-top:8px;color:var(--green)'>"+good.join(" ")+"</p>":"");
+  if(!save)return;
+  const meals=(document.getElementById("cdB").checked?"B":"")+(document.getElementById("cdL").checked?"L":"")+(document.getElementById("cdD").checked?"D":"");
+  if(!meals){box.innerHTML+="<p style='color:var(--red);margin-top:8px'>Select at least one meal type before saving.</p>";return}
+  const tags=[...document.querySelectorAll("#cdTags input:checked")].map(i=>i.value);
+  (document.getElementById("cdTagOther").value||"").split(",").map(s=>s.trim().toLowerCase()).filter(Boolean).forEach(t=>tags.push(t));
+  if(!tags.length)tags.push("mixveg");
+  customDishes.push([name,meals,document.getElementById("cdCui").value,cal,p,c,f,fib,tags,+document.getElementById("cdPrep").value||30,document.getElementById("cdPrepNote").value.trim()]);
+  store.set("mealplanner_custom",customDishes);
+  const cdRec=document.getElementById("cdRecipe").value.trim(),cdYt=document.getElementById("cdYt").value.trim();
+  if(cdRec||cdYt){dishExtras[name]={yt:cdYt,rec:cdRec};store.set("mealplanner_extras",dishExtras)}
+  box.innerHTML+="<p style='margin-top:10px;font-weight:700;color:var(--green)'>&#10004; Added to your library! It'll now show up in the planner"+(issues.length?" — the pairing tips above will help keep the day balanced.":".")+"</p>";
+  ["cdName","cdP","cdC","cdF","cdFib","cdCal","cdPrep","cdTagOther","cdPrepNote","cdRecipe","cdYt"].forEach(id=>document.getElementById(id).value="");
+  document.querySelectorAll("#cdTags input").forEach(i=>i.checked=false);
+  renderLibrary();toast("'"+name+"' added to your dish library");
+}
+
+/* ---- meal prep ---- */
+function renderPrep(){
+  const el=document.getElementById("prepContent");
+  const ids=new Set();
+  DAYS.forEach(day=>MEALS.forEach(([m])=>{const id=(week[day]||{})[m];if(id)ids.add(id)}));
+  if(!ids.size){el.innerHTML="<p class='empty-note'>Plan your week first (or hit Auto-fill) and your Sunday prep list will appear here.</p>";return}
+  const notes=new Map(); // note -> [dish names]
+  const legumes=new Set(),batters=new Set();
+  let gravyBase=false,palak=false,chopVeg=false,boilAloo=false,rotiCount=0,mushroomSun=false;
+  ids.forEach(id=>{
+    const d=byId(id);if(!d)return;
+    if(isRoti(d))rotiCount++;
+    if(d.prepAhead){const key=d.prepAhead;if(!notes.has(key))notes.set(key,[]);notes.get(key).push(d.name)}
+    d.tags.forEach(t=>{
+      if(["rajma","chana"].includes(t))legumes.add(t);
+      if(["dosa","idli","moong"].includes(t))batters.add(t==="moong"?"moong chilla/pesarattu":t);
+      if(["mixveg","cauliflower","capsicum","beans","bhindi"].includes(t))chopVeg=true;
+      if(t==="palak")palak=true;
+      if(t==="potato")boilAloo=true;
+      if(t==="mushroom")mushroomSun=true;
+    });
+    if(d.tags.includes("paneer")&&d.meals!=="B")gravyBase=true;
+  });
+  let html='<div class="prep-cols">';
+  // Sunday batch list
+  html+='<div class="prep-card"><h3>&#128722; Sunday batch-cook (60–90 min)</h3><ul>';
+  const batch=[];
+  if(legumes.size)batch.push("Soak "+[...legumes].map(l=>l==="chana"?"chole":l).join(" & ")+" Saturday night → pressure-cook Sunday, portion into boxes (fridge 3 days / freezer 1 month)");
+  if(gravyBase)batch.push("Make one big batch of onion-tomato gravy base → use for all paneer/mushroom curries this week (freezes well in cubes)");
+  if(palak)batch.push("Blanch & purée palak → fridge 3 days or freeze flat in a zip bag");
+  if(batters.size)batch.push("Make/buy batter for: "+[...batters].join(", ")+" (keeps 4–5 days refrigerated)");
+  if(boilAloo)batch.push("Boil a batch of potatoes → parathas, sabzis and chaats through the week");
+  if(mushroomSun)batch.push("Vitamin-D trick: slice this week's mushrooms and sun them gill-side up 15–20 min (windowsill works) before storing — they hold the vitamin D for days");
+  if(chopVeg)batch.push("Wash, chop & box vegetables for the week (beans, gobi, capsicum, salad veg)");
+  batch.push("Make green chutney + kachumber-ready veg → instant sides all week");
+  batch.push("Whisk a big bowl of dahi; set fresh dahi mid-week");
+  if(rotiCount)batch.push("Roti plan: make a weekend paratha/thepla batch (keeps 3–4 days), or stock ready-made chapatis — weekday rotis are a time trap");
+  batch.forEach(b=>html+='<li><input type="checkbox"><span>'+esc(b)+'</span></li>');
+  html+='</ul></div>';
+  // dish-specific notes
+  if(notes.size){
+    html+='<div class="prep-card"><h3>&#128221; Dish-specific prep (from your plan)</h3><ul>';
+    notes.forEach((dishNames,note)=>{
+      html+='<li><input type="checkbox"><span><b>'+esc([...new Set(dishNames)].join(", "))+':</b> '+esc(note)+'</span></li>';
+    });
+    html+='</ul></div>';
+  }
+  // london tips
+  html+='<div class="prep-card"><h3>&#127757; London kitchen tips</h3><ul>'
+    +'<li><span>Indian groceries: Wembley (Ealing Rd), Southall, East Ham, or online — Red Rickshaw / Spice Village. Paneer, fresh methi and good atta are all easy to find.</span></li>'
+    +'<li><span>Supermarket shortcuts: Sainsbury\'s/Tesco stock paneer, Greek yogurt (great dahi substitute), frozen peas/palak, and microwave pulses.</span></li>'
+    +'<li><span>Buy fresh idli/dosa batter from Indian stores — saves the grind entirely.</span></li>'
+    +'<li><span>Can\'t make rotis? No problem: frozen rotis/parathas (Elephant Atta, Shana) and whole-wheat tortilla wraps are everywhere in London — 2 min on the tawa.</span></li>'
+    +'<li><span>Invest in a pressure cooker/Instant Pot + 10–12 glass containers. Cook once, eat twice: dinner extra = next day\'s office lunch.</span></li>'
+    +'<li><span>UK winters: consider vitamin D supplements and get sunlight when you can — standard NHS advice for everyone.</span></li>'
+    +'<li><span><b>Protein toolkit:</b> vegetarian Indian food rarely crosses ~75g/day on its own — the 90g goal usually needs one deliberate top-up daily: a scoop of unflavoured whey or pea protein (MyProtein/Bulk in UK) whisked into milk, chaas or the ragi smoothie (+24g), Greek yogurt (10g/100g), or an extra paneer/tofu side. Whey mixes into Indian flavours invisibly.</span></li>'
+    +'<li><span><b>B12 &amp; D toolkit (London):</b> fortified nutritional yeast (Engevita blue tub — Holland &amp; Barrett/Tesco), Marmite, fortified soy/oat milk (Alpro etc.), and UV-treated "vitamin D mushrooms" in Tesco/M&amp;S. Or DIY: sun any sliced mushrooms gill-side up for 15–20 min. Food helps daily top-up, but for an actual diagnosed deficiency follow your GP\'s supplement plan too.</span></li>'
+    +'</ul></div>';
+  html+='</div>';
+  el.innerHTML=html;
+  renderGrocery();
+}
+
+/* ---- dish detail modal: recipe + eat-right tips + user recipe/YouTube ---- */
+let dishCtx=null;
+function openDish(id){
+  const d=byId(id);if(!d)return;dishCtx=id;
+  const ex=dishExtras[d.name]||{};
+  document.getElementById("dishTitle").innerHTML=dishEmoji(d)+' '+esc(d.name)
+    +(d.p>=18?'<span class="badge bg-hi-p">protein+</span>':'')
+    +(isRoti(d)?'<span class="badge bg-roti">&#129386; weekend-better</span>':'')
+    +vitBadges(d)
+    +(d.custom?'<span class="badge bg-custom">mine</span>':'');
+  document.getElementById("dishMeta").textContent=d.cal+" kcal · P "+d.p+"g · C "+d.c+"g · F "+d.f+"g · Fibre "+d.fib+"g · "+d.prep+" min";
+  let html="";
+  if(ex.img)html+='<img class="dish-photo" src="'+ex.img+'" alt="My photo of this dish">';
+  if(ex.yt)html+='<a class="yt-link" href="'+esc(ex.yt)+'" target="_blank" rel="noopener">&#9654; Watch my saved recipe video</a>';
+  const rec=RECIPES[d.name];
+  if(rec){html+='<div class="sec-h">Recipe</div><div class="rec-box">'+esc(rec)+'</div>'}
+  if(ex.rec){html+='<div class="sec-h">My recipe / notes</div><div class="rec-box">'+esc(ex.rec)+'</div>'}
+  if(d.prepAhead)html+='<div class="sec-h">Weekend prep</div><div class="prep-note" style="margin-bottom:10px">&#129379; '+esc(d.prepAhead)+'</div>';
+  const tips=dishTips(d);
+  if(tips.length){html+='<div class="sec-h">&#128161; Eat it right (weight-friendly)</div>';tips.forEach(t=>html+='<div class="tip-item">'+esc(t)+'</div>')}
+  html+='<div class="sec-h">📷 My photo of this dish</div>';
+  if(ex.img)html+='<button class="btn btn-ghost btn-sm" onclick="removeDishPhoto()">Remove my photo</button>';
+  else html+='<input type="file" accept="image/*" onchange="uploadDishPhoto(this)" style="font-size:12.5px">'
+    +'<div style="font-size:11.5px;color:var(--muted);margin-top:4px">Made it? Snap it! Your photo shows here and gets a 📷 badge in the library.</div>';
+  html+='<div class="sec-h">Save your own recipe or video link</div>'
+    +'<input type="text" id="exYt" placeholder="YouTube link (optional)" value="'+esc(ex.yt||"")+'">'
+    +'<textarea id="exRec" placeholder="Your recipe or notes — e.g. Mummy\'s version: add kasuri methi at the end…">'+esc(ex.rec||"")+'</textarea>'
+    +'<button class="btn btn-primary btn-sm" onclick="saveExtras()">Save recipe & link</button>';
+  document.getElementById("dishBody").innerHTML=html;
+  document.getElementById("dishOverlay").classList.add("open");
+}
+function closeDish(){document.getElementById("dishOverlay").classList.remove("open");dishCtx=null}
+document.getElementById("dishOverlay").addEventListener("click",e=>{if(e.target.id==="dishOverlay")closeDish()});
+function saveExtras(){
+  const d=byId(dishCtx);if(!d)return;
+  const yt=document.getElementById("exYt").value.trim();
+  const rec=document.getElementById("exRec").value.trim();
+  const img=(dishExtras[d.name]||{}).img;
+  if(yt||rec||img)dishExtras[d.name]={yt,rec,img};else delete dishExtras[d.name];
+  store.set("mealplanner_extras",dishExtras);
+  toast("Saved for '"+d.name+"'");openDish(dishCtx);
+}
+function uploadDishPhoto(input){
+  const d=byId(dishCtx);const f=input.files&&input.files[0];
+  if(!d||!f)return;
+  compressImage(f,640,0.78,url=>{
+    dishExtras[d.name]=Object.assign(dishExtras[d.name]||{},{img:url});
+    store.set("mealplanner_extras",dishExtras);
+    toast("Photo saved 📷");openDish(dishCtx);renderLibrary();
+  });
+}
+function removeDishPhoto(){
+  const d=byId(dishCtx);if(!d)return;
+  const ex=dishExtras[d.name];if(ex){delete ex.img;if(!ex.yt&&!ex.rec)delete dishExtras[d.name]}
+  store.set("mealplanner_extras",dishExtras);
+  toast("Photo removed");openDish(dishCtx);renderLibrary();
+}
+
+/* ---- backup & cross-device sync ---- */
+const DATA_KEYS=["mealplanner_custom","mealplanner_plans","mealplanner_extras","mealplanner_stickers","mealplanner_stickimgs","mealplanner_theme","mealplanner_bgset"];
+let syncCfg=store.get("mealplanner_sync",{token:"",gist:""});
+let syncTimer=null,syncBusy=false;
+const _origSet=store.set.bind(store);
+store.set=(k,v)=>{ // every data change: save locally + stamp + schedule cloud push
+  _origSet(k,v);
+  if(DATA_KEYS.includes(k)){_origSet("mealplanner_savedat",new Date().toISOString());scheduleSync()}
+};
+function buildExport(){
+  const data={};DATA_KEYS.forEach(k=>data[k]=store.get(k,null));
+  return {app:"meal-planner",version:2,savedAt:new Date().toISOString(),data};
+}
+function applyImport(obj){
+  DATA_KEYS.forEach(k=>{if(obj.data[k]!==null&&obj.data[k]!==undefined)_origSet(k,obj.data[k])});
+  _origSet("mealplanner_savedat",obj.savedAt||new Date().toISOString());
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(buildExport())],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="meal-planner-backup-"+isoDate(new Date())+".json";
+  document.body.appendChild(a);a.click();a.remove();
+  toast("Backup downloaded 💾 — keep it somewhere safe");
+}
+function importData(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const obj=JSON.parse(r.result);
+      if(obj.app!=="meal-planner"||!obj.data)throw 0;
+      applyImport(obj);
+      toast("Backup restored — reloading…");
+      setTimeout(()=>location.reload(),700);
+    }catch(e){toast("That doesn't look like a Meal Planner backup file")}
+  };
+  r.readAsText(f);input.value="";
+}
+function saveSyncCfg(){_origSet("mealplanner_sync",syncCfg)}
+function updateSyncStatus(t){const el=document.getElementById("syncStatus");if(el)el.textContent=t}
+function gh(path,method,body){
+  return fetch("https://api.github.com"+path,{
+    method:method||"GET",
+    headers:{"Authorization":"token "+syncCfg.token,"Accept":"application/vnd.github+json"},
+    body:body?JSON.stringify(body):undefined
+  });
+}
+function scheduleSync(){
+  if(!syncCfg.token||!syncCfg.gist||typeof fetch==="undefined")return;
+  updateSyncStatus("Saving to cloud…");
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(pushSync,3000);
+}
+async function pushSync(){
+  if(!syncCfg.token||!syncCfg.gist||syncBusy)return;
+  syncBusy=true;
+  try{
+    const payload=buildExport();
+    const r=await gh("/gists/"+syncCfg.gist,"PATCH",{files:{"mealplanner.json":{content:JSON.stringify(payload)}}});
+    if(r.ok){_origSet("mealplanner_savedat",payload.savedAt);updateSyncStatus("Synced ✓ "+new Date().toLocaleTimeString())}
+    else updateSyncStatus("Sync failed ("+r.status+") — will retry on next change");
+  }catch(e){updateSyncStatus("Offline — will sync when back online")}
+  syncBusy=false;
+}
+async function pullSync(force){
+  if(!syncCfg.token||!syncCfg.gist)return;
+  try{
+    const r=await gh("/gists/"+syncCfg.gist);if(!r.ok)return;
+    const g=await r.json();
+    const remote=JSON.parse(g.files["mealplanner.json"].content);
+    const localAt=store.get("mealplanner_savedat","");
+    if(force||(remote.savedAt&&remote.savedAt>localAt)){
+      applyImport(remote);
+      toast("Loaded your latest data ☁️ — reloading…");
+      setTimeout(()=>location.reload(),700);
+    }
+  }catch(e){}
+}
+async function connectSync(){
+  const token=document.getElementById("syncToken").value.trim();
+  if(!token){toast("Paste your GitHub token first");return}
+  syncCfg.token=token;
+  updateSyncStatus("Connecting…");
+  try{
+    const res=await gh("/gists");
+    if(!res.ok)throw new Error("token rejected ("+res.status+") — check the gist scope");
+    const gists=await res.json();
+    const g=gists.find(x=>x.description==="meal-planner-sync"&&x.files&&x.files["mealplanner.json"]);
+    if(g){
+      syncCfg.gist=g.id;saveSyncCfg();
+      updateSyncStatus("Connected ✓ — checking for newer data…");
+      toast("Cloud sync is on ☁️");
+      await pullSync(false);
+      updateSyncStatus("Connected ✓ — auto-sync on");
+    }else{
+      const cr=await gh("/gists","POST",{description:"meal-planner-sync",public:false,files:{"mealplanner.json":{content:JSON.stringify(buildExport())}}});
+      if(!cr.ok)throw new Error("could not create cloud storage ("+cr.status+")");
+      syncCfg.gist=(await cr.json()).id;saveSyncCfg();
+      updateSyncStatus("Connected ✓ — auto-sync on");
+      toast("Cloud sync is on ☁️ — this device's data is now the cloud copy");
+    }
+  }catch(e){
+    syncCfg.token="";syncCfg.gist="";saveSyncCfg();
+    updateSyncStatus("Not connected — "+e.message);
+  }
+}
+function manualSync(){
+  if(!syncCfg.token||!syncCfg.gist){toast("Connect cloud sync first");return}
+  clearTimeout(syncTimer);pushSync();
+}
+function disconnectSync(){
+  syncCfg={token:"",gist:""};saveSyncCfg();
+  updateSyncStatus("Not connected");
+  toast("Cloud sync off — data stays on this device");
+}
+function openSync(){
+  updateSyncStatus(syncCfg.token&&syncCfg.gist?"Connected ✓ — auto-sync on":"Not connected");
+  document.getElementById("syncOverlay").classList.add("open");
+}
+function closeSync(){document.getElementById("syncOverlay").classList.remove("open")}
+document.getElementById("syncOverlay").addEventListener("click",e=>{if(e.target.id==="syncOverlay")closeSync()});
+
+/* ---- month calendar ---- */
+let monthCursor=new Date();
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function shortName(name){
+  return name.split(/ \+ | with /i)[0].replace(/\(.*?\)/g,"").trim();
+}
+function shiftMonth(n){monthCursor=new Date(monthCursor.getFullYear(),monthCursor.getMonth()+n,1);renderMonth()}
+function jumpToWeek(wk){gotoWeek(new Date(wk+"T12:00:00"));switchTab("planner")}
+function renderMonth(){
+  saveWeek();
+  const y=monthCursor.getFullYear(),mo=monthCursor.getMonth();
+  document.getElementById("monthLabel").textContent=MONTHS[mo]+" "+y;
+  const first=new Date(y,mo,1,12), daysIn=new Date(y,mo+1,0).getDate();
+  const lead=(first.getDay()+6)%7; // Mon=0
+  const todayIso=isoDate(new Date()), curWk=isoDate(curMonday);
+  const el=document.getElementById("monthCells");el.innerHTML="";
+  for(let i=0;i<lead;i++){const c=document.createElement("div");c.className="mcell empty";el.appendChild(c)}
+  for(let dn=1;dn<=daysIn;dn++){
+    const dt=new Date(y,mo,dn,12), iso=isoDate(dt);
+    const wk=isoDate(mondayOf(dt)), dayName=DAYS[(dt.getDay()+6)%7];
+    const plan=(plans[wk]||{})[dayName]||{};
+    const c=document.createElement("div");
+    c.className="mcell"+(iso===todayIso?" today":"")+(wk===curWk?" cur-week":"");
+    const cellSt=(stickers[iso]||[]).slice(0,3).map(s=>s.e||"🖼️").join("");
+    let html='<div class="mdate">'+dn+(cellSt?'<span class="mstick">'+cellSt+'</span>':'')+'</div>';
+    let dots="";
+    MEALS.forEach(([m])=>{
+      const id=plan[m];if(!id)return;
+      const d=byId(id);if(!d)return;
+      html+='<div class="mmeal" title="'+esc(d.name)+'">'+MEAL_EMOJI[m]+' '+esc(shortName(d.name))+'</div>';
+      dots+=dishEmoji(d);
+    });
+    if(dots)html+='<div class="mdots" style="display:none">'+dots+'</div>';
+    c.innerHTML=html;
+    c.title="Open this week in the planner";
+    c.onclick=()=>jumpToWeek(wk);
+    el.appendChild(c);
+  }
+}
+
+/* ---- themes ---- */
+function setTheme(t){
+  document.body.className=t||"";
+  store.set("mealplanner_theme",t||"");
+  const sel=document.getElementById("themeSel");if(sel)sel.value=t||"";
+  if(typeof applyBg==="function")applyBg(false); // re-derive card colours for new theme
+}
+
+/* ---- custom background & style settings ---- */
+const THEME_CARDS={"":["#ffffff","#fbf8f3"],"t-journal":["#fffdf4","#f7f0df"],"t-pastel":["#ffffff","#fbeef4"],"t-night":["#272c21","#2f3527"]};
+let bgSet=Object.assign({color:"",ink:"",img:"",fit:"cover",blur:0,veil:55,cardAlpha:100},store.get("mealplanner_bgset",{}));
+const INK_PAIRS=[ // [background, font, name] — tested for contrast
+  ["#faf7f2","#26221d","Fresh"],["#f6efe0","#3d2f1d","Cream"],["#e8f3e9","#1e3b24","Mint"],
+  ["#e7f0fa","#16324f","Sky"],["#fdeef2","#4a2436","Blush"],["#f3e7d3","#2f2415","Sand"],
+  ["#23272e","#f1eee6","Slate"],["#1c2018","#edefe5","Forest"]
+];
+function hexToRgba(hex,a){
+  const h=hex.replace("#","");
+  const n=h.length===3?h.split("").map(c=>c+c).join(""):h;
+  return "rgba("+parseInt(n.slice(0,2),16)+","+parseInt(n.slice(2,4),16)+","+parseInt(n.slice(4,6),16)+","+a+")";
+}
+function applyBg(save){
+  const L=document.getElementById("bgLayer"),V=document.getElementById("bgVeilEl"),bs=document.body.style;
+  if(bgSet.color)bs.setProperty("--bg",bgSet.color);else bs.removeProperty("--bg");
+  if(bgSet.ink){bs.setProperty("--ink",bgSet.ink);bs.setProperty("--muted",hexToRgba(bgSet.ink,0.62))}
+  else{bs.removeProperty("--ink");bs.removeProperty("--muted")}
+  if(bgSet.img){
+    L.style.backgroundImage="url("+bgSet.img+")";
+    L.style.backgroundSize=bgSet.fit==="repeat"?"auto":bgSet.fit;
+    L.style.backgroundRepeat=bgSet.fit==="repeat"?"repeat":"no-repeat";
+    L.style.filter=bgSet.blur?"blur("+bgSet.blur+"px)":"";
+    V.style.opacity=bgSet.veil/100;
+  }else{L.style.backgroundImage="";L.style.filter="";V.style.opacity=0}
+  const base=THEME_CARDS[document.body.className]||THEME_CARDS[""];
+  if(bgSet.cardAlpha<100){
+    bs.setProperty("--card",hexToRgba(base[0],bgSet.cardAlpha/100));
+    bs.setProperty("--card2",hexToRgba(base[1],bgSet.cardAlpha/100));
+  }else{bs.removeProperty("--card");bs.removeProperty("--card2")}
+  if(save!==false)store.set("mealplanner_bgset",bgSet);
+}
+function syncStyleUI(){
+  const g=id=>document.getElementById(id);
+  g("stColor").value=bgSet.color||"#faf7f2";
+  g("stInk").value=bgSet.ink||"#26221d";
+  const ps=g("pairSwatches");ps.innerHTML="";
+  INK_PAIRS.forEach(([bg,ink,name])=>{
+    const b=document.createElement("button");
+    b.textContent="Aa";b.title=name+" — readable pair";
+    b.style.background=bg;b.style.color=ink;
+    b.onclick=()=>{bgSet.color=bg;bgSet.ink=ink;applyBg();syncStyleUI();toast(name+" pair applied")};
+    ps.appendChild(b);
+  });
+  g("stFit").value=bgSet.fit;
+  g("stBlur").value=bgSet.blur;g("stBlurVal").textContent=bgSet.blur;
+  g("stVeil").value=bgSet.veil;g("stVeilVal").textContent=bgSet.veil;
+  g("stCard").value=bgSet.cardAlpha;g("stCardVal").textContent=bgSet.cardAlpha;
+}
+function openStyle(){syncStyleUI();document.getElementById("styleOverlay").classList.add("open")}
+function closeStyle(){document.getElementById("styleOverlay").classList.remove("open")}
+document.getElementById("styleOverlay").addEventListener("click",e=>{if(e.target.id==="styleOverlay")closeStyle()});
+function compressImage(file,maxW,q,cb){
+  const r=new FileReader();
+  r.onload=()=>{const img=new Image();img.onload=()=>{
+    const sc=Math.min(1,maxW/img.width);
+    const cv=document.createElement("canvas");
+    cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+    cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+    cb(cv.toDataURL("image/jpeg",q));
+  };img.src=r.result};
+  r.readAsDataURL(file);
+}
+function uploadBg(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  compressImage(f,1600,0.8,url=>{
+    bgSet.img=url;applyBg();syncStyleUI();
+    toast(url.length>2500000?"Image applied — quite large, may not persist after closing":"Background applied 🖼️");
+  });
+  input.value="";
+}
+function resetBg(){bgSet={color:"",ink:"",img:"",fit:"cover",blur:0,veil:55,cardAlpha:100};applyBg();syncStyleUI();toast("Back to theme default")}
+
+/* ---- day stickers: free placement, drag to move, resize, custom images ---- */
+let stickers=store.get("mealplanner_stickers",{}); // {"2026-07-06":[{e:"⭐",x:8,y:6,s:24}|{img:dataURL,x,y,s},...]}
+// migrate old plain-emoji format
+Object.keys(stickers).forEach(k=>{
+  stickers[k]=stickers[k].map((s,i)=>typeof s==="string"?{e:s,x:6+(i%5)*17,y:4,s:20}:s);
+});
+let customStickers=store.get("mealplanner_stickimgs",[]);
+const STICKERS=[
+  "😀","😂","🤣","😊","😍","🥰","😘","😎","🤩","🥳","😋","😜","🤪","😇","🙃","😴",
+  "🤤","🥺","😭","🤯","🥶","🤒","🤗","🙄","🤔","🤭","😱","💀","👍","👏","🙌","🙏",
+  "💪","🤝","👌","✌️","🫶","❤️","🧡","💛","💚","💙","💜","💖","💯","⭐","🌟","✨",
+  "🔥","🎉","🎊","🥳","🎂","🎁","🏆","🥇","🍀","🌈","🌸","🌺","🌻","🌙","☀️","⚡",
+  "🍕","🍰","🧁","🍩","🍫","☕","🍵","🧋","🍾","🥂","🍓","🥭","🍉","🥗","🍜","🍛",
+  "👩‍🍳","👨‍🍳","🛒","📝","📌","🧘","🏃‍♀️","🚴","💤","😴","🎬","🎵","✈️","🏠","💼","🐱"
+];
+let stickCtx=null,selStickerEl=null;
+function openStickers(iso){
+  stickCtx=iso;
+  document.getElementById("stickerSub").textContent="Tap a sticker to place it on "+iso+". Then drag it anywhere on the card; tap it and use ➕ ➖ to resize, 🗑 to delete.";
+  const g=document.getElementById("stickerGrid");g.innerHTML="";
+  STICKERS.forEach(s=>{
+    const b=document.createElement("button");b.textContent=s;
+    b.onclick=()=>placeSticker({e:s,s:24});
+    g.appendChild(b);
+  });
+  const cw=document.getElementById("customStickers");cw.innerHTML="";
+  customStickers.forEach((u,i)=>{
+    const b=document.createElement("button");b.className="cstick";
+    b.innerHTML='<img src="'+u+'"><span class="cs-del" title="Remove from palette" onclick="delCustomSticker(event,'+i+')">✕</span>';
+    b.onclick=()=>placeSticker({img:u,s:56});
+    cw.appendChild(b);
+  });
+  document.getElementById("stickerOverlay").classList.add("open");
+}
+function placeSticker(base){
+  (stickers[stickCtx]=stickers[stickCtx]||[]).push(Object.assign({x:8,y:6},base));
+  store.set("mealplanner_stickers",stickers);
+  closeStickers();renderWeek();
+}
+function closeStickers(){document.getElementById("stickerOverlay").classList.remove("open");stickCtx=null}
+document.getElementById("stickerOverlay").addEventListener("click",e=>{if(e.target.id==="stickerOverlay")closeStickers()});
+function uploadSticker(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const fin=url=>{customStickers.push(url);store.set("mealplanner_stickimgs",customStickers);openStickers(stickCtx||isoDate(curMonday));toast("Sticker added to your palette")};
+  if(f.size<200000){const r=new FileReader();r.onload=()=>fin(r.result);r.readAsDataURL(f)}
+  else compressImagePng(f,256,fin); // big file → shrink, keep transparency
+  input.value="";
+}
+function compressImagePng(file,maxW,cb){
+  const r=new FileReader();
+  r.onload=()=>{const img=new Image();img.onload=()=>{
+    const sc=Math.min(1,maxW/img.width);
+    const cv=document.createElement("canvas");
+    cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+    cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+    cb(cv.toDataURL("image/png"));
+  };img.src=r.result};
+  r.readAsDataURL(file);
+}
+function delCustomSticker(ev,i){
+  ev.stopPropagation();
+  customStickers.splice(i,1);store.set("mealplanner_stickimgs",customStickers);
+  openStickers(stickCtx||isoDate(curMonday));
+}
+function stkScale(ev,iso,idx,f){
+  ev.stopPropagation();
+  const st=(stickers[iso]||[])[idx];if(!st)return;
+  st.s=Math.max(12,Math.min(160,Math.round(st.s*f)));
+  const el=ev.target&&ev.target.closest?ev.target.closest(".fstick"):null;
+  if(el){
+    if(st.img){const im=el.querySelector("img");if(im)im.style.width=st.s+"px"}
+    else el.style.fontSize=st.s+"px";
+  }
+  store.set("mealplanner_stickers",stickers);
+}
+function stkDel(ev,iso,idx){
+  ev.stopPropagation();
+  (stickers[iso]||[]).splice(idx,1);
+  if(stickers[iso]&&!stickers[iso].length)delete stickers[iso];
+  store.set("mealplanner_stickers",stickers);
+  selStickerEl=null;renderWeek();
+}
+function toggleStickerSel(el){
+  if(selStickerEl&&selStickerEl!==el)selStickerEl.classList.remove("sel");
+  el.classList.toggle("sel");
+  selStickerEl=el.classList.contains("sel")?el:null;
+}
+function stickerHtml(dIso){
+  return (stickers[dIso]||[]).map((s,i)=>
+    '<div class="fstick" data-iso="'+dIso+'" data-idx="'+i+'" style="left:'+s.x+'%;top:'+s.y+'%;'+(s.img?'':'font-size:'+s.s+'px')+'" title="Drag to move · tap to select">'
+    +'<span class="fs-body" style="transform:rotate('+(s.r||0)+'deg)">'+(s.img?'<img src="'+s.img+'" style="width:'+s.s+'px" alt="sticker">':s.e)+'</span>'
+    +'<span class="fs-h fs-rot" title="Drag to rotate">↻</span>'
+    +'<span class="fs-h fs-res" title="Drag to resize">⤡</span>'
+    +'<button class="fs-del" title="Delete" onclick="stkDel(event,\''+dIso+'\','+i+')">✕</button></div>'
+  ).join("");
+}
+function applyStickerStyle(el,st){
+  const body=el.querySelector?el.querySelector(".fs-body"):null;
+  if(body)body.style.transform="rotate("+(st.r||0)+"deg)";
+  if(st.img){const im=el.querySelector?el.querySelector("img"):null;if(im)im.style.width=st.s+"px"}
+  else el.style.fontSize=st.s+"px";
+}
+function attachSticker(el){
+  const iso=el.dataset.iso, idx=+el.dataset.idx;
+  el.onpointerdown=e=>{
+    if(e.target.tagName==="BUTTON")return; // delete button → its onclick handles it
+    const st=(stickers[iso]||[])[idx];if(!st)return;
+    e.preventDefault();
+    const cls=e.target.classList;
+    const mode=cls&&cls.contains&&cls.contains("fs-rot")?"rot":cls&&cls.contains&&cls.contains("fs-res")?"res":"move";
+    const card=el.parentElement,r=card.getBoundingClientRect();
+    const b=el.getBoundingClientRect(),cx=b.left+b.width/2,cy=b.top+b.height/2;
+    const sx=e.clientX,sy=e.clientY,ox=st.x,oy=st.y,os=st.s,orr=st.r||0;
+    const d0=Math.max(8,Math.hypot(sx-cx,sy-cy)),a0=Math.atan2(sy-cy,sx-cx);
+    let moved=false;
+    el.setPointerCapture(e.pointerId);
+    el.onpointermove=ev=>{
+      if(Math.abs(ev.clientX-sx)+Math.abs(ev.clientY-sy)>4)moved=true;
+      if(mode==="res"){
+        st.s=Math.max(12,Math.min(220,Math.round(os*Math.hypot(ev.clientX-cx,ev.clientY-cy)/d0)));
+        applyStickerStyle(el,st);
+      }else if(mode==="rot"){
+        let deg=orr+(Math.atan2(ev.clientY-cy,ev.clientX-cx)-a0)*180/Math.PI;
+        const snap=Math.round(deg/15)*15;
+        if(Math.abs(deg-snap)<5)deg=snap; // gentle snap every 15°
+        st.r=((Math.round(deg)%360)+360)%360;
+        applyStickerStyle(el,st);
+      }else{
+        st.x=Math.min(96,Math.max(-4,ox+(ev.clientX-sx)/r.width*100));
+        st.y=Math.min(96,Math.max(-4,oy+(ev.clientY-sy)/r.height*100));
+        el.style.left=st.x+"%";el.style.top=st.y+"%";
+      }
+    };
+    el.onpointerup=ev=>{
+      el.onpointermove=null;
+      try{el.releasePointerCapture(ev.pointerId)}catch(_){}
+      if(moved)store.set("mealplanner_stickers",stickers);
+      else if(mode==="move")toggleStickerSel(el);
+    };
+  };
+}
+
+/* ---- misc ---- */
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600)}
+function switchTab(tab){
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===tab));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.id===tab));
+  if(tab==="month")renderMonth();
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+setTheme(store.get("mealplanner_theme",""));
+applyBg(false);
+initTagChecks();renderLibChips();renderLibrary();renderWeek();renderPrep();
+if(typeof fetch!=="undefined"&&syncCfg.token&&syncCfg.gist)pullSync(false);
+</script>
+</body>
+</html>
